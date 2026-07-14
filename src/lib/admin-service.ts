@@ -14,6 +14,11 @@ function client() {
 }
 
 export function adminErrorMessage(error: unknown): string {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? String((error as { code: unknown }).code)
+      : "";
+  const suffix = code ? ` (código ${code})` : "";
   const raw =
     error && typeof error === "object" && "message" in error
       ? String((error as { message: unknown }).message)
@@ -22,7 +27,7 @@ export function adminErrorMessage(error: unknown): string {
         : "No se pudo completar la operación";
   const normalized = raw.toLowerCase();
   if (normalized.includes("row-level security") || normalized.includes("permission denied"))
-    return "Supabase rechazó la operación por permisos. Verificá que tu rol esté activo y ejecutá la migración administrativa 004.";
+    return `Supabase rechazó la operación por permisos. Verificá que tu rol esté activo y ejecutá la migración administrativa 005.${suffix}`;
   if (normalized.includes("does not exist") || normalized.includes("could not find the table"))
     return "Falta una tabla o función administrativa en Supabase. Ejecutá las migraciones 001 a 004 en orden.";
   if (normalized.includes("jwt") || normalized.includes("session"))
@@ -62,8 +67,16 @@ export async function saveAdminRow(table: string, row: Record<string, unknown>) 
     data: { user },
   } = await client().auth.getUser();
   if (!user) throw new Error("Sesión requerida");
-  const payload = { ...row, updated_by: user.id, ...(!row.id ? { created_by: user.id } : {}) };
-  const { data, error } = await client().from(table).upsert(payload).select().single();
+  const isUpdate = Boolean(row.id);
+  const payload = {
+    ...row,
+    updated_by: user.id,
+    ...(!isUpdate ? { created_by: user.id } : {}),
+  };
+  const query = isUpdate
+    ? client().from(table).update(payload).eq("id", String(row.id))
+    : client().from(table).insert(payload);
+  const { data, error } = await query.select().single();
   if (error) throw error;
   return data;
 }

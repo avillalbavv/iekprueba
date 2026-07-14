@@ -20,6 +20,7 @@ Ejecutar, en orden:
 2. `supabase/migrations/202607120002_platform_modules.sql`
 3. `supabase/migrations/202607120003_schedule_revisions_and_permissions.sql`
 4. `supabase/migrations/202607120004_admin_panel_reliability.sql`
+5. `supabase/migrations/202607120005_admin_write_policy_repair.sql`
 
 La migración 004 corrige los permisos efectivos de publicación, la secuencia de
 versiones y los tipos de archivo que algunos navegadores asignan a Excel/CSV. Si
