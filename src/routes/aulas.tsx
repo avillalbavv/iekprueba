@@ -23,6 +23,7 @@ import {
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import {
   DATA,
   type Seccion,
@@ -511,13 +512,8 @@ function AulasPage() {
           <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
-              <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
-                <Link to="/" className="transition-colors hover:text-foreground">
-                  Inicio
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground">¿Dónde rindo?</span>
-              </div>
+              <PageBreadcrumb current="¿Dónde rindo?" />
+              <PageEyebrow icon={MapPin}>Exámenes y aulas</PageEyebrow>
               <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">
                 ¿Dónde <span className="text-gradient">rindo?</span>
               </h1>

@@ -8,6 +8,8 @@ import {
   FileText,
   GraduationCap,
   Loader2,
+  Mail,
+  MessageSquare,
   ShieldCheck,
   Upload,
   Users,
@@ -24,6 +26,7 @@ import {
   revokeRole,
   saveAdminRow,
   searchUsers,
+  updateContactMessageStatus,
   type AppRole,
   type RegisteredUser,
 } from "@/lib/admin-service";
@@ -32,7 +35,15 @@ import { parseScheduleFile } from "@/lib/schedule-import-parser";
 import type { Seccion } from "@/lib/poliplanner";
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 type Tab =
-  "dashboard" | "notices" | "calendar" | "exams" | "resources" | "schedules" | "users" | "audit";
+  | "dashboard"
+  | "notices"
+  | "calendar"
+  | "exams"
+  | "resources"
+  | "schedules"
+  | "messages"
+  | "users"
+  | "audit";
 type AdminOperation = (action: () => Promise<unknown>, success: string) => Promise<void>;
 function AdminPage() {
   const auth = useAuth();
@@ -53,6 +64,7 @@ function AdminPage() {
       if (next === "exams") setRows(await listAdminRows("exam_schedules"));
       if (next === "resources") setRows(await listAdminRows("academic_resources"));
       if (next === "schedules") setRows(await listAdminRows("schedule_revisions"));
+      if (next === "messages") setRows(await listAdminRows("contact_messages"));
       if (next === "users") setUsers(await searchUsers());
       if (next === "audit") setRows(await listAudit());
     } catch (e) {
@@ -134,6 +146,7 @@ function AdminPage() {
               { id: "exams", label: "Exámenes", Icon: GraduationCap },
               { id: "resources", label: "Recursos", Icon: BookOpen },
               { id: "schedules", label: "Horarios", Icon: Upload },
+              { id: "messages", label: "Mensajes", Icon: MessageSquare },
               { id: "users", label: "Usuarios y permisos", Icon: Users },
               { id: "audit", label: "Auditoría", Icon: FileText },
             ] as const
@@ -205,6 +218,14 @@ function AdminPage() {
             {tab === "schedules" && (
               <ScheduleUpdates rows={rows} reload={() => load("schedules")} perform={perform} />
             )}
+            {tab === "messages" && (
+              <ContactMessages
+                rows={rows}
+                canWrite={auth.role !== "viewer"}
+                reload={() => load("messages")}
+                perform={perform}
+              />
+            )}
             {tab === "users" && auth.role === "superadmin" && (
               <UsersPanel users={users} reload={() => load("users")} perform={perform} />
             )}{" "}
@@ -235,6 +256,83 @@ function Dashboard() {
           <p className="mt-1 text-sm text-muted-foreground">{x.text}</p>
         </article>
       ))}
+    </div>
+  );
+}
+
+function ContactMessages({
+  rows,
+  canWrite,
+  reload,
+  perform,
+}: {
+  rows: Record<string, unknown>[];
+  canWrite: boolean;
+  reload: () => void;
+  perform: AdminOperation;
+}) {
+  return (
+    <div className="space-y-3">
+      {rows.map((row) => (
+        <article key={String(row.id)} className="glass rounded-2xl p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-semibold text-foreground">{String(row.subject)}</h2>
+                <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                  {String(row.status) === "new" ? "Nuevo" : String(row.status)}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {String(row.name)} · {new Date(String(row.created_at)).toLocaleString("es-PY")}
+              </p>
+            </div>
+            <a
+              href={`mailto:${String(row.email)}?subject=${encodeURIComponent(`Re: ${String(row.subject)}`)}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10"
+            >
+              <Mail className="h-3.5 w-3.5" /> Responder
+            </a>
+          </div>
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+            {String(row.message)}
+          </p>
+          <p className="mt-3 break-all text-xs text-muted-foreground/70">{String(row.email)}</p>
+          {canWrite && String(row.status) !== "archived" && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {String(row.status) === "new" && (
+                <button
+                  onClick={() =>
+                    void perform(async () => {
+                      await updateContactMessageStatus(String(row.id), "read");
+                      await reload();
+                    }, "Mensaje marcado como leído.")
+                  }
+                  className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+                >
+                  Marcar leído
+                </button>
+              )}
+              <button
+                onClick={() =>
+                  void perform(async () => {
+                    await updateContactMessageStatus(String(row.id), "archived");
+                    await reload();
+                  }, "Mensaje archivado.")
+                }
+                className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Archivar
+              </button>
+            </div>
+          )}
+        </article>
+      ))}
+      {!rows.length && (
+        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
+          No hay mensajes recibidos.
+        </div>
+      )}
     </div>
   );
 }

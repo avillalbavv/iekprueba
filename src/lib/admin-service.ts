@@ -29,7 +29,7 @@ export function adminErrorMessage(error: unknown): string {
   if (normalized.includes("row-level security") || normalized.includes("permission denied"))
     return `Supabase rechazó la operación por permisos. Verificá que tu rol esté activo y ejecutá la migración administrativa 005.${suffix}`;
   if (normalized.includes("does not exist") || normalized.includes("could not find the table"))
-    return "Falta una tabla, columna o función en Supabase. Ejecutá todas las migraciones pendientes, incluida 202607160001_schedule_dataset_publication.sql.";
+    return "Falta una tabla, columna o función en Supabase. Ejecutá todas las migraciones pendientes, incluidas las actualizaciones de horarios y mensajes de contacto.";
   if (normalized.includes("jwt") || normalized.includes("session"))
     return "La sesión venció. Cerrá sesión, volvé a ingresar y repetí la operación.";
   return raw;
@@ -69,9 +69,25 @@ export async function listAdminRows(table: string) {
     if (error) throw error;
     return (data || []) as Record<string, unknown>[];
   }
+  if (table === "contact_messages") {
+    const { data, error } = await client()
+      .from(table)
+      .select("id,name,email,subject,message,status,created_at,updated_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return (data || []) as Record<string, unknown>[];
+  }
   const { data, error } = await client().from(table).select("*").limit(100);
   if (error) throw error;
   return data || [];
+}
+export async function updateContactMessageStatus(id: string, status: "read" | "archived") {
+  const { error } = await client().rpc("update_contact_message_status", {
+    p_message_id: id,
+    p_status: status,
+  });
+  if (error) throw error;
 }
 export async function saveAdminRow(table: string, row: Record<string, unknown>) {
   const {

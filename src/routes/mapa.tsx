@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Layers } from "lucide-react";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import {
   ENFASIS_OPTIONS,
   MALLAS_ACADEMICAS,
@@ -1036,10 +1037,8 @@ function MapaInteractivoPage() {
           <div className="iek-mapa-selector-card w-full max-w-3xl mx-auto px-1 sm:px-0">
             {/* Header */}
             <div className="text-center mb-8">
-              <span className="glass inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs text-muted-foreground mb-4">
-                <Layers className="h-3.5 w-3.5 text-primary" />
-                Mapa Interactivo de Materias · IEK FPUNA
-              </span>
+              <PageBreadcrumb current="Mapa de Materias" className="justify-center" />
+              <PageEyebrow icon={Layers}>Malla y correlatividades</PageEyebrow>
               <h1 className="font-display text-3xl sm:text-4xl font-bold mt-2">
                 Seleccioná tu <span className="text-gradient">énfasis</span>
               </h1>
@@ -1109,6 +1108,17 @@ function MapaInteractivoPage() {
           className={`iek-mapa-root iek-mapa-content${mapVisible ? " visible" : ""}`}
         >
           <div className="m-wrap">
+            <div className="mb-8 max-w-3xl">
+              <PageBreadcrumb current="Mapa de Materias" />
+              <PageEyebrow icon={Layers}>Malla y correlatividades</PageEyebrow>
+              <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                Mapa de <span className="text-gradient">Materias</span>
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Explorá la malla, marcá tu avance y verificá qué materias se habilitan según sus
+                correlatividades.
+              </p>
+            </div>
             <div
               className="mb-5 rounded-2xl border border-border bg-card p-2 sm:inline-flex"
               role="group"

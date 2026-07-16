@@ -1,8 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   CheckCircle2,
-  ChevronRight,
   Cloud,
   CloudOff,
   Download,
@@ -13,11 +12,13 @@ import {
   RefreshCw,
   ShieldCheck,
   Trash2,
+  UserRound,
   UserPlus,
 } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNavbar } from "@/components/SiteNavbar";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { deleteSyncedAcademicData, exportAcademicData } from "@/lib/user-state";
@@ -95,7 +96,7 @@ function CuentaPage() {
         const result = await auth.signUp(email.trim(), password, displayName);
         setMessage(
           result.needsConfirmation
-            ? "Revisá tu correo para confirmar la cuenta. Después podrás iniciar sesión."
+            ? "Revisá tu correo para confirmar la cuenta. Si no aparece, buscá también en Spam o Correo no deseado."
             : "Cuenta creada. Tus datos locales se están sincronizando.",
         );
       }
@@ -156,13 +157,8 @@ function CuentaPage() {
       <SiteNavbar />
       <main className="mx-auto max-w-4xl px-6 pb-24 pt-12 sm:pt-20">
         <Reveal>
-          <div className="mb-8 flex items-center gap-2 text-xs text-muted-foreground">
-            <Link to="/" className="hover:text-foreground">
-              Inicio
-            </Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground">Mi cuenta</span>
-          </div>
+          <PageBreadcrumb current="Mi cuenta" />
+          <PageEyebrow icon={UserRound}>Perfil y sincronización</PageEyebrow>
           <h1 className="text-4xl font-bold sm:text-5xl">
             Mi <span className="text-gradient">cuenta IEK</span>
           </h1>
@@ -225,7 +221,7 @@ function CuentaPage() {
                   <p>
                     <strong className="text-foreground">Para ingresar:</strong> usá el mismo correo
                     y contraseña con los que creaste la cuenta. Si recién te registraste, confirmá
-                    primero el enlace recibido por correo.
+                    primero el enlace recibido por correo y revisá Spam si no lo encontrás.
                   </p>
                 ) : (
                   <ol className="space-y-1">
@@ -239,7 +235,7 @@ function CuentaPage() {
                     </li>
                     <li>
                       <strong className="text-foreground">3.</strong> Abrí el correo de confirmación
-                      y después iniciá sesión.
+                      y después iniciá sesión. Si no aparece, revisá Spam o Correo no deseado.
                     </li>
                   </ol>
                 )}
@@ -316,7 +312,9 @@ function CuentaPage() {
                     execute(async () => {
                       if (!email.trim()) throw new Error("Ingresá primero tu correo");
                       await auth.resetPassword(email.trim());
-                      setMessage("Te enviamos un enlace para cambiar la contraseña.");
+                      setMessage(
+                        "Te enviamos un enlace para cambiar la contraseña. Revisá también Spam o Correo no deseado.",
+                      );
                     })
                   }
                   className="mt-4 w-full text-center text-xs text-muted-foreground hover:text-primary"

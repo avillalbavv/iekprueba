@@ -81,15 +81,20 @@ const MEGA_MENU = [
   },
 ];
 
-function ThemeToggle() {
+function ThemeToggle({ menu = false }: { menu?: boolean }) {
   const { theme, toggle } = useTheme();
   return (
     <button
       onClick={toggle}
       aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className="rounded-md p-2 transition hover:bg-foreground/10 text-muted-foreground hover:text-foreground"
+      className={
+        menu
+          ? "flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-foreground/6 hover:text-foreground"
+          : "rounded-md p-2 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground"
+      }
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {menu && <span>{theme === "dark" ? "Usar modo claro" : "Usar modo oscuro"}</span>}
     </button>
   );
 }
@@ -117,7 +122,7 @@ export function SiteNavbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div className="mx-auto mt-3 max-w-6xl px-4">
+      <div className="mx-auto max-w-6xl px-4 [margin-top:max(0.75rem,env(safe-area-inset-top))] [padding-left:max(1rem,env(safe-area-inset-left))] [padding-right:max(1rem,env(safe-area-inset-right))]">
         <nav className="glass-strong flex items-center justify-between rounded-2xl px-4 py-3 glow-ring">
           {/* Logo */}
           <Link to="/" className="group flex items-center gap-3 flex-shrink-0" aria-label="Inicio">
@@ -194,13 +199,15 @@ export function SiteNavbar() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <GlobalCommand />
+            <div className="hidden xl:block">
+              <GlobalCommand />
+            </div>
             <NotificationBell />
             {auth.role !== "student" && (
               <Link
                 to="/admin"
                 aria-label="Panel administrativo"
-                className="rounded-md p-2 text-muted-foreground hover:bg-foreground/10 hover:text-primary"
+                className="hidden rounded-md p-2 text-muted-foreground hover:bg-foreground/10 hover:text-primary xl:block"
               >
                 <ShieldCheck className="h-4 w-4" />
               </Link>
@@ -208,11 +215,13 @@ export function SiteNavbar() {
             <Link
               to="/cuenta"
               aria-label="Mi cuenta"
-              className="relative rounded-md p-2 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground [&.active]:text-primary"
+              className="relative hidden rounded-md p-2 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground xl:block [&.active]:text-primary"
             >
               <UserRound className="h-4 w-4" />
             </Link>
-            <ThemeToggle />
+            <div className="hidden xl:block">
+              <ThemeToggle />
+            </div>
             <a
               href="https://www.pol.una.py/carreras/iek/"
               target="_blank"
@@ -234,6 +243,20 @@ export function SiteNavbar() {
         {/* Mobile menu — agrupado por las mismas categorías que el mega menú de escritorio */}
         {open && (
           <div className="mt-2 max-h-[75vh] animate-fade-in overflow-y-auto rounded-2xl border border-border bg-popover p-2 shadow-2xl xl:hidden">
+            <div className="mb-1">
+              <GlobalCommand menu onClose={() => setOpen(false)} />
+              <ThemeToggle menu />
+              {auth.role !== "student" && (
+                <Link
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-foreground/6 hover:text-primary"
+                >
+                  <ShieldCheck className="h-4 w-4" /> Panel administrativo
+                </Link>
+              )}
+            </div>
+            <div className="mx-2 my-1 h-px bg-foreground/8" />
             {NAV_PRINCIPALES.map(({ to, label }) => (
               <Link
                 key={to}

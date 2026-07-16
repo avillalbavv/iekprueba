@@ -37,6 +37,7 @@ import {
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import {
   Accordion,
   AccordionContent,
@@ -295,11 +296,13 @@ function PoliPlannerPage() {
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
         {/* ── HERO ── */}
         <Reveal className="pp-no-print">
-          <div className="mb-8 text-center sm:text-left">
-            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          <div className="mb-8">
+            <PageBreadcrumb current="Planificador IEK" />
+            <PageEyebrow icon={CalendarRange}>Organización académica</PageEyebrow>
+            <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               Planificador <span className="text-gradient">IEK</span>
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base mx-auto sm:mx-0">
+            <p className="mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">
               Elegí tu énfasis, marcá las materias que vas a cursar y armá tu horario semanal
               automáticamente — con detección de choques y calendario de exámenes incluido.
             </p>

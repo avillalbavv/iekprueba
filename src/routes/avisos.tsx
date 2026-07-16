@@ -4,12 +4,13 @@
  * vacío elegante y ya tiene filtro por tipo listo para cuando se
  * carguen avisos reales.
  */
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Bell, Megaphone, CalendarDays, Sparkles } from "lucide-react";
+import { Bell, Megaphone, CalendarDays, Sparkles } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import { AVISOS, TIPO_CONFIG, type AvisoTipo, type Aviso } from "@/data/avisos";
 import { supabase } from "@/lib/supabase";
 
@@ -124,13 +125,8 @@ function AvisosPage() {
           <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
-              <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
-                <Link to="/" className="transition-colors hover:text-foreground">
-                  Inicio
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground">Avisos</span>
-              </div>
+              <PageBreadcrumb current="Avisos" />
+              <PageEyebrow icon={Megaphone}>Comunicación estudiantil</PageEyebrow>
               <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">
                 <span className="text-gradient">Avisos</span>
               </h1>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { DATA } from "@/lib/poliplanner";
 import { AVISOS } from "@/data/avisos";
@@ -17,20 +17,32 @@ const routes = [
   ["/recursos", "Recursos"],
   ["/manual-de-bichos", "Manual de ingresantes"],
 ] as const;
-export function GlobalCommand() {
+export function GlobalCommand({
+  menu = false,
+  onOpen,
+  onClose,
+}: {
+  menu?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+} = {}) {
   const [open, setOpen] = useState(false),
     [query, setQuery] = useState("");
+  const closeCommand = useCallback(() => {
+    setOpen(false);
+    onClose?.();
+  }, [onClose]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen(true);
       }
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") closeCommand();
     };
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
-  }, []);
+  }, [closeCommand]);
   const items = useMemo(() => {
     const base = [
       ...routes.map(([to, label]) => ({ to, label, kind: "Herramienta" })),
@@ -49,17 +61,25 @@ export function GlobalCommand() {
     <>
       {
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            onOpen?.();
+            setOpen(true);
+          }}
           aria-label="Buscar en el sitio"
-          className="rounded-md p-2 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+          className={
+            menu
+              ? "flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-foreground/6 hover:text-foreground"
+              : "rounded-md p-2 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+          }
         >
           <Search className="h-4 w-4" />
+          {menu && <span>Buscar en el sitio</span>}
         </button>
       }
       {open && (
         <div
           className="fixed inset-0 z-[200] bg-background/70 p-4 pt-[10vh] backdrop-blur-sm"
-          onMouseDown={() => setOpen(false)}
+          onMouseDown={closeCommand}
         >
           <div
             role="dialog"
@@ -77,7 +97,7 @@ export function GlobalCommand() {
                 placeholder="Buscar materias, herramientas, avisos o trámites…"
                 className="min-w-0 flex-1 bg-transparent outline-none"
               />
-              <button onClick={() => setOpen(false)}>
+              <button onClick={closeCommand}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -86,6 +106,7 @@ export function GlobalCommand() {
                 <a
                   key={`${i.to}-${i.label}-${index}`}
                   href={i.to}
+                  onClick={closeCommand}
                   className="flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:bg-foreground/5"
                 >
                   <span>{i.label}</span>

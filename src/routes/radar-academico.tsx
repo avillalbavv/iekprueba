@@ -12,6 +12,7 @@ import {
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Reveal } from "@/components/Reveal";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import { buildAcademicRadar, type RadarItem } from "@/lib/academic-radar";
 import { syncRadarNotifications } from "@/lib/notification-service";
 export const Route = createFileRoute("/radar-academico")({ component: RadarPage });
@@ -92,14 +93,8 @@ function RadarPage() {
       <main className="relative mx-auto max-w-6xl px-6 py-12 sm:py-16">
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
         <Reveal className="relative">
-          <nav
-            className="mb-6 flex items-center gap-2 text-sm text-muted-foreground"
-            aria-label="Breadcrumb"
-          >
-            <Link to="/">Inicio</Link>
-            <span aria-hidden>›</span>
-            <span className="font-medium text-foreground">Mi Semestre</span>
-          </nav>
+          <PageBreadcrumb current="Mi Semestre" />
+          <PageEyebrow icon={CalendarClock}>Resumen académico personalizado</PageEyebrow>
           <h1 className="font-display text-4xl font-bold leading-none tracking-tight sm:text-6xl lg:text-7xl">
             Mi <span className="text-gradient">Semestre</span>
           </h1>

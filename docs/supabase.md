@@ -25,6 +25,7 @@ Respaldá la base y ejecutá en SQL Editor, respetando este orden:
 4. `202607120004_admin_panel_reliability.sql`
 5. `202607120005_admin_write_policy_repair.sql`
 6. `202607160001_schedule_dataset_publication.sql`
+7. `202607160002_contact_messages.sql`
 
 Después de aplicar cambios de esquema, podés forzar la recarga de PostgREST con:
 
@@ -40,6 +41,7 @@ Las migraciones crean, entre otras entidades:
 - planes y sesiones de estudio;
 - notificaciones y semestres archivados;
 - revisiones versionadas de horarios;
+- mensajes de contacto con límite anti-spam y bandeja administrativa;
 - funciones administrativas y registro de auditoría.
 
 ## Autenticación
@@ -84,6 +86,7 @@ Con cuentas separadas de estudiante y administrador:
 5. Verificar que la revisión activa llegue al Planificador, Dónde rindo y calendario.
 6. Revocar el rol administrativo y comprobar que el acceso desaparezca al instante.
 7. Revisar que las operaciones anteriores estén en auditoría.
+8. Enviar un mensaje desde `/contacto` y comprobar que aparezca en **Mensajes**.
 
 ## Sincronización personal
 

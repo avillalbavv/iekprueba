@@ -6,12 +6,13 @@
  * semestre). El usuario solo marca cuáles aprobó y con qué nota;
  * el promedio se recalcula en tiempo real. Persistencia en localStorage.
  */
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart2, ChevronRight, Search, Check, RotateCcw, Info } from "lucide-react";
+import { BarChart2, Search, Check, RotateCcw, Info } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import {
   Accordion,
   AccordionContent,
@@ -176,13 +177,8 @@ function PromedioPage() {
           <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
-              <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
-                <Link to="/" className="transition-colors hover:text-foreground">
-                  Inicio
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground">Promedio General</span>
-              </div>
+              <PageBreadcrumb current="Promedio General" />
+              <PageEyebrow icon={BarChart2}>Progreso académico</PageEyebrow>
               <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">
                 Promedio <span className="text-gradient">General</span>
               </h1>

@@ -1,16 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import {
-  BookOpenCheck,
-  ChevronDown,
-  ChevronRight,
-  CircleAlert,
-  ExternalLink,
-  Search,
-} from "lucide-react";
+import { BookOpenCheck, ChevronDown, CircleAlert, ExternalLink, Search } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import { BICHOS, CATEGORIA_LABEL, CATEGORIA_COLOR, type BichoCategoria } from "@/data/bichos";
 
 export const Route = createFileRoute("/manual-de-bichos")({ component: ManualBichosPage });
@@ -42,13 +36,8 @@ function ManualBichosPage() {
           <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
-              <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
-                <Link to="/" className="transition-colors hover:text-foreground">
-                  Inicio
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground">Manual de Nuevos Ingresantes</span>
-              </div>
+              <PageBreadcrumb current="Manual de Nuevos Ingresantes" />
+              <PageEyebrow icon={BookOpenCheck}>Orientación para nuevos estudiantes</PageEyebrow>
               <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">
                 Manual de <span className="text-gradient">Nuevos Ingresantes</span>
               </h1>

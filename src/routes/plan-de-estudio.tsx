@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CalendarPlus, CheckCircle2, Clock3, RefreshCw } from "lucide-react";
+import { BookOpenCheck, CalendarPlus, CheckCircle2, Clock3, RefreshCw } from "lucide-react";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import { DATA } from "@/lib/poliplanner";
 import {
   generateStudyPlan,
@@ -59,14 +60,13 @@ function StudyPlannerPage() {
       <SiteNavbar />
       <main className="relative mx-auto max-w-6xl px-6 py-12 sm:py-16">
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-35" />
-        <div className="relative text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-            Organización personal
-          </p>
-          <h1 className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-6xl">
+        <div className="relative max-w-3xl">
+          <PageBreadcrumb current="Planificador de estudio" />
+          <PageEyebrow icon={BookOpenCheck}>Organización personal</PageEyebrow>
+          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             Planificador de <span className="text-gradient">Estudio</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
+          <p className="mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
             Distribuí temas y sesiones de forma realista hasta la fecha de tu examen.
           </p>
         </div>

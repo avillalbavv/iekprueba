@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast, Toaster } from "sonner";
 import { z } from "zod";
+import { submitContactMessage } from "@/lib/contact-service";
 
 export const Route = createFileRoute("/contacto")({ component: ContactoPage });
 
@@ -78,9 +79,10 @@ const SOCIALS = [
 function ContactoPage() {
   const [loading, setLoading] = useState(false);
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
     const data = Object.fromEntries(fd.entries());
     const parsed = contactSchema.safeParse(data);
     if (!parsed.success) {
@@ -88,16 +90,27 @@ function ContactoPage() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const delivery = await submitContactMessage({
+        ...parsed.data,
+        website: String(data.website || ""),
+      });
+      if (delivery === "stored") {
+        toast.success("Mensaje enviado a la Delegación. Gracias por escribirnos.");
+      } else {
+        toast.info("Abrimos tu aplicación de correo. Confirmá allí el envío del mensaje.");
+      }
+      form.reset();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo enviar el mensaje");
+    } finally {
       setLoading(false);
-      toast.success("¡Mensaje recibido! Gracias por escribirnos.");
-      (e.target as HTMLFormElement).reset();
-    }, 700);
+    }
   }
 
   return (
     <div className="min-h-screen">
-      <Toaster theme="dark" position="top-center" richColors />
+      <Toaster theme="system" position="top-center" richColors />
       <SiteNavbar />
       <main>
         {/* Header */}
@@ -144,6 +157,15 @@ function ContactoPage() {
                   <Send className="h-5 w-5 text-primary" />
                   Envianos un mensaje
                 </h2>
+
+                <input
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="absolute -left-[9999px] h-px w-px opacity-0"
+                />
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">

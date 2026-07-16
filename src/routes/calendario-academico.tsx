@@ -4,7 +4,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ChevronRight,
   CalendarDays,
   Users,
   GraduationCap,
@@ -17,6 +16,7 @@ import {
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageBreadcrumb, PageEyebrow } from "@/components/PageHeading";
 import { supabase } from "@/lib/supabase";
 import {
   EVENTOS_CON_FECHA,
@@ -124,13 +124,8 @@ function CalendarioAcademicoPage() {
           <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
-              <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
-                <Link to="/" className="transition-colors hover:text-foreground">
-                  Inicio
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground">Calendario Académico</span>
-              </div>
+              <PageBreadcrumb current="Calendario Académico" />
+              <PageEyebrow icon={CalendarDays}>Fechas y trámites académicos</PageEyebrow>
               <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">
                 Calendario <span className="text-gradient">Académico 2026</span>
               </h1>
