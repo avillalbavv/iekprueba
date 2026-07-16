@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { Check, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Bot, Check, Clock3, LoaderCircle, Sparkles, TriangleAlert } from "lucide-react";
 import type { MateriaMalla } from "@/lib/malla-curricular";
 import { seccionesPorMateriaMalla } from "@/lib/poliplanner";
 import { generateSemesterSchedules, type ScheduleProposal } from "@/lib/schedule-generator";
+import { shiftDistance } from "@/lib/schedule-preference";
 
 interface Props {
   materias: MateriaMalla[];
@@ -26,18 +27,48 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
     [materias],
   );
   const [selected, setSelected] = useState<string[]>(() =>
-    selectedIds.filter((id) => offered.some((entry) => entry.materia.id === id)),
+    selectedIds.filter((id) =>
+      offered.some((entry) => entry.materia.id === id && entry.schedulableSections.length > 0),
+    ),
   );
   const [shift, setShift] = useState<"" | "M" | "T" | "N">("");
   const [freeDay, setFreeDay] = useState("");
   const [proposals, setProposals] = useState<ScheduleProposal[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const generationTimer = useRef<number | null>(null);
 
   useEffect(() => {
     setSelected((current) =>
-      current.filter((id) => offered.some((entry) => entry.materia.id === id)),
+      current.filter((id) =>
+        offered.some((entry) => entry.materia.id === id && entry.schedulableSections.length > 0),
+      ),
     );
     setProposals([]);
   }, [offered]);
+
+  useEffect(
+    () => () => {
+      if (generationTimer.current) window.clearTimeout(generationTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    setProposals([]);
+    setHasGenerated(false);
+  }, [selected, shift, freeDay]);
+
+  const offeredBySemester = useMemo(
+    () =>
+      [...new Set(offered.map((entry) => entry.materia.semestre))]
+        .sort((a, b) => a - b)
+        .map((semester) => ({
+          semester,
+          entries: offered.filter((entry) => entry.materia.semestre === semester),
+        })),
+    [offered],
+  );
 
   const sectionToMalla = useMemo(
     () =>
@@ -49,6 +80,18 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
     [offered],
   );
 
+  const mallaNameById = useMemo(
+    () => new Map(offered.map(({ materia }) => [materia.id, materia.nombre])),
+    [offered],
+  );
+
+  function toggleSemester(ids: string[]) {
+    const allSelected = ids.every((id) => selected.includes(id));
+    setSelected((current) =>
+      allSelected ? current.filter((id) => !ids.includes(id)) : [...new Set([...current, ...ids])],
+    );
+  }
+
   function generate() {
     const materiaIdGroups = selected
       .map((mallaId) => {
@@ -56,17 +99,26 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
         return [...new Set(entry?.schedulableSections.map((section) => section.materiaId) || [])];
       })
       .filter((group) => group.length > 0);
-    setProposals(
-      generateSemesterSchedules({
-        materiaIds: materiaIdGroups.flat(),
-        materiaIdGroups,
-        maxSubjects: 7,
-        preferredShift: shift || undefined,
-        freeDay: freeDay || undefined,
-        maxDays: 6,
-        allowOverlap: false,
-      }),
-    );
+    setIsGenerating(true);
+    setHasGenerated(false);
+    setProposals([]);
+    if (generationTimer.current) window.clearTimeout(generationTimer.current);
+    generationTimer.current = window.setTimeout(() => {
+      setProposals(
+        generateSemesterSchedules({
+          materiaIds: materiaIdGroups.flat(),
+          materiaIdGroups,
+          maxSubjects: selected.length,
+          preferredShift: shift || undefined,
+          freeDay: freeDay || undefined,
+          maxDays: 6,
+          allowOverlap: false,
+        }),
+      );
+      setIsGenerating(false);
+      setHasGenerated(true);
+      generationTimer.current = null;
+    }, 650);
   }
 
   function apply(proposal: ScheduleProposal) {
@@ -99,38 +151,67 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
           Seleccioná las materias y tus preferencias. Se usarán únicamente las secciones reales del
           periodo.
         </p>
-        <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
-          {offered.map(({ materia, sections, schedulableSections }) => (
-            <label
-              key={materia.id}
-              className={`flex gap-3 rounded-lg p-2 ${
-                schedulableSections.length
-                  ? "cursor-pointer hover:bg-foreground/5"
-                  : "cursor-not-allowed opacity-65"
-              }`}
-            >
-              <input
-                type="checkbox"
-                disabled={!schedulableSections.length}
-                checked={selected.includes(materia.id)}
-                onChange={(event) =>
-                  setSelected(
-                    event.target.checked
-                      ? [...selected, materia.id]
-                      : selected.filter((id) => id !== materia.id),
-                  )
-                }
-              />
-              <span className="text-sm">
-                {materia.nombre}
-                <small className="block text-muted-foreground">
-                  {schedulableSections.length
-                    ? `${schedulableSections.length} sección${schedulableSections.length === 1 ? "" : "es"} con horario`
-                    : `${sections.length} sección${sections.length === 1 ? "" : "es"} · horario pendiente de confirmación`}
-                </small>
-              </span>
-            </label>
-          ))}
+        <div className="mt-4 max-h-[28rem] space-y-3 overflow-auto pr-2">
+          {offeredBySemester.map(({ semester, entries }) => {
+            const semesterIds = entries
+              .filter((entry) => entry.schedulableSections.length > 0)
+              .map((entry) => entry.materia.id);
+            const selectedCount = semesterIds.filter((id) => selected.includes(id)).length;
+            const allSelected = semesterIds.length > 0 && selectedCount === semesterIds.length;
+            return (
+              <div key={semester} className="rounded-xl border border-border/80 p-2">
+                <div className="flex items-center justify-between gap-2 px-1 pb-1">
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{semester}° semestre</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {selectedCount} de {semesterIds.length} seleccionadas
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!semesterIds.length}
+                    onClick={() => toggleSemester(semesterIds)}
+                    className="rounded-lg border border-border px-2 py-1 text-[10px] font-medium text-primary hover:bg-primary/10 disabled:opacity-40"
+                  >
+                    {allSelected ? "Quitar semestre" : "Seleccionar semestre"}
+                  </button>
+                </div>
+                <div className="mt-1 space-y-1">
+                  {entries.map(({ materia, sections, schedulableSections }) => (
+                    <label
+                      key={materia.id}
+                      className={`flex gap-3 rounded-lg p-2 ${
+                        schedulableSections.length
+                          ? "cursor-pointer hover:bg-foreground/5"
+                          : "cursor-not-allowed opacity-65"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={!schedulableSections.length}
+                        checked={selected.includes(materia.id)}
+                        onChange={(event) =>
+                          setSelected(
+                            event.target.checked
+                              ? [...selected, materia.id]
+                              : selected.filter((id) => id !== materia.id),
+                          )
+                        }
+                      />
+                      <span className="text-sm">
+                        {materia.nombre}
+                        <small className="block text-muted-foreground">
+                          {schedulableSections.length
+                            ? `${schedulableSections.length} sección${schedulableSections.length === 1 ? "" : "es"} con horario`
+                            : `${sections.length} sección${sections.length === 1 ? "" : "es"} · horario pendiente de confirmación`}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="text-xs">
@@ -161,18 +242,47 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
           </label>
         </div>
         <button
-          disabled={!selected.length}
+          disabled={!selected.length || isGenerating}
           onClick={generate}
-          className="mt-4 w-full rounded-xl bg-primary p-3 font-medium text-primary-foreground disabled:opacity-40"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary p-3 font-medium text-primary-foreground disabled:opacity-40"
         >
-          Generar alternativas
+          {isGenerating ? (
+            <>
+              <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" /> Analizando secciones…
+            </>
+          ) : (
+            <>
+              <Bot className="h-4 w-4" /> Generar mi mejor horario
+            </>
+          )}
         </button>
       </section>
 
       <section className="space-y-4">
-        {!proposals.length && (
+        {isGenerating && (
+          <div className="pp-panel rounded-2xl p-8 text-center" role="status" aria-live="polite">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary motion-safe:animate-pulse">
+              <Bot className="h-7 w-7" />
+            </div>
+            <h3 className="mt-4 font-display font-semibold">Asistente IEK trabajando</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Está intentando incluir todas tus materias, respetar el día libre, acercarse al turno
+              elegido y reducir las horas entre clases.
+            </p>
+          </div>
+        )}
+        {!isGenerating && !proposals.length && !hasGenerated && (
           <div className="pp-panel rounded-2xl p-8 text-center text-muted-foreground">
-            Elegí materias y generá alternativas para compararlas acá.
+            Elegí materias por semestre y el asistente propondrá como máximo dos horarios.
+          </div>
+        )}
+        {!isGenerating && hasGenerated && !proposals.length && (
+          <div className="pp-panel rounded-2xl p-8 text-center">
+            <TriangleAlert className="mx-auto h-7 w-7 text-amber-500" />
+            <p className="mt-3 font-medium">No se encontró una combinación sin choques.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Probá con menos materias o revisá manualmente sus secciones.
+            </p>
           </div>
         )}
         {proposals.map((proposal) => (
@@ -183,12 +293,15 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
                 <p className="text-sm text-muted-foreground">{proposal.explanation.join(" ")}</p>
               </div>
               <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold text-primary">
-                Puntuación {proposal.score}
+                Afinidad {proposal.score}%
               </span>
             </div>
-            <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
+            <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs sm:grid-cols-5">
               <div>
-                <b className="block text-lg">{proposal.sections.length}</b>materias
+                <b className="block text-lg">
+                  {proposal.sections.length}/{proposal.requestedSubjects}
+                </b>
+                materias
               </div>
               <div>
                 <b className="block text-lg">{proposal.days}</b>días
@@ -198,9 +311,96 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
                 semanales
               </div>
               <div>
+                <b className="block text-lg">{Math.round(proposal.gapMinutes / 60)} h</b>
+                horas libres
+              </div>
+              <div>
                 <b className="block text-lg">{proposal.conflicts}</b>conflictos
               </div>
             </div>
+            {(() => {
+              const appliedMallaIds = new Set(
+                proposal.sections
+                  .map((section) => sectionToMalla.get(section.materiaId))
+                  .filter((id): id is string => Boolean(id)),
+              );
+              const missing = selected
+                .filter((id) => !appliedMallaIds.has(id))
+                .map((id) => mallaNameById.get(id) || id);
+              const freeDaySubjects = freeDay
+                ? proposal.sections
+                    .filter((section) => section.clases.some((clase) => clase.dia === freeDay))
+                    .map(
+                      (section) =>
+                        mallaNameById.get(sectionToMalla.get(section.materiaId) || "") ||
+                        section.materia,
+                    )
+                : [];
+              const preferredShift = shift || undefined;
+              const shiftFallbacks = preferredShift
+                ? proposal.sections.filter((section) => section.turno !== preferredShift)
+                : [];
+              const shiftLabel: Record<string, string> = {
+                M: "mañana",
+                T: "tarde",
+                N: "noche",
+              };
+              return (
+                <div className="mt-4 space-y-2 text-xs">
+                  {!missing.length && (
+                    <div className="flex gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-emerald-700 dark:text-emerald-300">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0" /> Incluye todas las materias que
+                      seleccionaste.
+                    </div>
+                  )}
+                  {missing.length > 0 && (
+                    <div className="flex gap-2 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-red-700 dark:text-red-300">
+                      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        No se pudieron incluir por choques: <b>{missing.join(", ")}</b>.
+                      </span>
+                    </div>
+                  )}
+                  {freeDaySubjects.length > 0 && (
+                    <div className="flex gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-amber-800 dark:text-amber-300">
+                      <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        {freeDay} no puede quedar libre porque <b>{freeDaySubjects.join(", ")}</b>{" "}
+                        tiene clase ese día.
+                      </span>
+                    </div>
+                  )}
+                  {shiftFallbacks.map((section) => {
+                    const mallaId = sectionToMalla.get(section.materiaId) || "";
+                    const subject = mallaNameById.get(mallaId) || section.materia;
+                    const entry = offered.find((candidate) => candidate.materia.id === mallaId);
+                    const hasPreferred = entry?.schedulableSections.some(
+                      (candidate) => candidate.turno === preferredShift,
+                    );
+                    const hasCloserAlternative = entry?.schedulableSections.some(
+                      (candidate) =>
+                        shiftDistance(candidate.turno, preferredShift) <
+                        shiftDistance(section.turno, preferredShift),
+                    );
+                    return (
+                      <div
+                        key={section.id}
+                        className="flex gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3 text-sky-800 dark:text-sky-300"
+                      >
+                        <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>
+                          <b>{subject}</b> quedó en turno{" "}
+                          {shiftLabel[section.turno] || section.turno}
+                          {hasPreferred || hasCloserAlternative
+                            ? ` para conservar más materias y evitar choques.`
+                            : ` porque no tiene sección de ${shiftLabel[preferredShift || ""]}; es el turno viable más cercano.`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
               {proposal.sections.map((section) => (
                 <li key={section.id} className="rounded-xl border border-border p-3 text-sm">

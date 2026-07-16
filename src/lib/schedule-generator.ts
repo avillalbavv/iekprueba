@@ -5,7 +5,7 @@ import {
   parseHora,
   type Seccion,
 } from "./poliplanner.ts";
-import { preferSectionsByShift } from "./schedule-preference.ts";
+import { shiftDistance } from "./schedule-preference.ts";
 export interface GeneratorPreferences {
   materiaIds: string[];
   materiaIdGroups?: string[][];
@@ -26,10 +26,13 @@ export interface ScheduleProposal {
   weeklyMinutes: number;
   gapMinutes: number;
   conflicts: number;
+  requestedSubjects: number;
+  freeDayConflicts: string[];
+  shiftFallbacks: { subject: string; assignedShift: string; distance: number }[];
   explanation: string[];
 }
 type ScheduleCandidate = ReturnType<typeof metrics> & { sections: Seccion[] };
-function metrics(sections: Seccion[]) {
+function metrics(sections: Seccion[], p: GeneratorPreferences) {
   const byDay = new Map<string, { start: number; end: number }[]>();
   let weeklyMinutes = 0;
   for (const s of sections)
@@ -50,11 +53,19 @@ function metrics(sections: Seccion[]) {
     weeklyMinutes,
     gapMinutes,
     conflicts: findScheduleConflicts(sections).length,
+    freeDayViolations: p.freeDay
+      ? sections.filter((section) => section.clases.some((clase) => clase.dia === p.freeDay)).length
+      : 0,
+    shiftDistance: p.preferredShift
+      ? sections.reduce(
+          (total, section) => total + shiftDistance(section.turno, p.preferredShift),
+          0,
+        )
+      : 0,
   };
 }
 function valid(section: Seccion, p: GeneratorPreferences) {
   if (!section.clases.length) return false;
-  if (p.freeDay && section.clases.some((c) => c.dia === p.freeDay)) return false;
   return !(p.blocked || []).some((b) =>
     section.clases.some((c) => {
       if (c.dia !== b.day) return false;
@@ -66,20 +77,26 @@ function valid(section: Seccion, p: GeneratorPreferences) {
 function optionsForGroup(ids: string[], p: GeneratorPreferences): Seccion[] {
   const uniqueIds = new Set(ids);
   const available = DATA.filter((section) => uniqueIds.has(section.materiaId) && valid(section, p));
-  return preferSectionsByShift(available, p.preferredShift);
+  return available.sort((a, b) => {
+    const aFreeDay = p.freeDay && a.clases.some((clase) => clase.dia === p.freeDay) ? 1 : 0;
+    const bFreeDay = p.freeDay && b.clases.some((clase) => clase.dia === p.freeDay) ? 1 : 0;
+    return (
+      aFreeDay - bFreeDay ||
+      shiftDistance(a.turno, p.preferredShift) - shiftDistance(b.turno, p.preferredShift) ||
+      a.seccion.localeCompare(b.seccion, "es")
+    );
+  });
 }
 
 function candidateRank(sections: Seccion[], p: GeneratorPreferences): number {
-  const value = metrics(sections);
-  const shiftMatches = p.preferredShift
-    ? sections.filter((section) => section.turno === p.preferredShift).length
-    : 0;
+  const value = metrics(sections, p);
   return (
-    sections.length * 100_000 +
-    shiftMatches * 5_000 -
-    value.conflicts * 50_000 -
-    value.days * 500 -
-    value.gapMinutes
+    sections.length * 1_000_000 -
+    value.conflicts * 500_000 -
+    value.freeDayViolations * 100_000 -
+    value.shiftDistance * 30_000 -
+    value.gapMinutes * 5 -
+    value.days * 300
   );
 }
 
@@ -93,7 +110,7 @@ function enumerate(groups: string[][], p: GeneratorPreferences): Seccion[][] {
       expanded.push(current);
       for (const option of options) {
         const next = [...current, option];
-        const value = metrics(next);
+        const value = metrics(next, p);
         if (!p.allowOverlap && value.conflicts > 0) continue;
         if (p.maxDays && value.days > p.maxDays) continue;
         expanded.push(next);
@@ -114,26 +131,13 @@ function enumerate(groups: string[][], p: GeneratorPreferences): Seccion[][] {
   return candidates;
 }
 export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProposal[] {
-  const groups = (
-    p.materiaIdGroups?.length
-      ? p.materiaIdGroups.map((group) => [...new Set(group)])
-      : [...new Set(p.materiaIds)].map((id) => [id])
-  ).slice(0, p.maxSubjects || 8);
-  const fallbackGroups = p.preferredShift
-    ? groups.filter((group) => {
-        const ids = new Set(group);
-        const validSections = DATA.filter(
-          (section) => ids.has(section.materiaId) && valid(section, p),
-        );
-        return (
-          validSections.length > 0 &&
-          !validSections.some((section) => section.turno === p.preferredShift)
-        );
-      }).length
-    : 0;
+  const allGroups = p.materiaIdGroups?.length
+    ? p.materiaIdGroups.map((group) => [...new Set(group)])
+    : [...new Set(p.materiaIds)].map((id) => [id]);
+  const groups = p.maxSubjects ? allGroups.slice(0, p.maxSubjects) : allGroups;
   const candidates = enumerate(groups, p)
     .filter((s) => s.length > 0)
-    .map((sections) => ({ sections, ...metrics(sections) }))
+    .map((sections) => ({ sections, ...metrics(sections, p) }))
     .filter(
       (x) =>
         (p.allowOverlap ? x.conflicts <= 1 : x.conflicts === 0) &&
@@ -141,64 +145,72 @@ export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProp
     );
   const profiles = [
     {
-      label: "Opción equilibrada",
+      label: "Horario recomendado",
       fn: (x: ScheduleCandidate) =>
-        x.sections.length * 1000 -
-        x.days * 80 -
-        x.gapMinutes -
-        x.conflicts * 500 +
-        (p.preferredShift
-          ? x.sections.filter((s) => s.turno === p.preferredShift).length * 2_000
-          : 0),
-      explanation: "Equilibra materias, días y ventanas.",
+        x.sections.length * 1_000_000 -
+        x.conflicts * 500_000 -
+        x.freeDayViolations * 100_000 -
+        x.shiftDistance * 30_000 -
+        x.gapMinutes * 8 -
+        x.days * 300,
+      explanation: "Prioriza todas tus materias y luego reduce las horas libres.",
     },
     {
-      label: "Horario más compacto",
-      fn: (x: ScheduleCandidate) => x.sections.length * 500 - x.gapMinutes * 3 - x.days * 30,
-      explanation: "Minimiza horas libres entre clases.",
+      label: "Alternativa compacta",
+      fn: (x: ScheduleCandidate) =>
+        x.sections.length * 1_000_000 -
+        x.conflicts * 500_000 -
+        x.freeDayViolations * 100_000 -
+        x.shiftDistance * 30_000 -
+        x.gapMinutes * 15 -
+        x.days * 100,
+      explanation: "Mantiene tus prioridades y comprime todavía más las ventanas.",
     },
-    {
-      label: "Menor cantidad de días",
-      fn: (x: ScheduleCandidate) => x.sections.length * 500 - x.days * 400 - x.gapMinutes,
-      explanation: "Concentra la cursada en menos días.",
-    },
-    {
-      label: "Máxima cantidad de materias",
-      fn: (x: ScheduleCandidate) => x.sections.length * 2000 - x.conflicts * 1000 - x.gapMinutes,
-      explanation: "Incluye la mayor cantidad posible sin conflictos bloqueantes.",
-    },
-    ...(p.preferredShift
-      ? [
-          {
-            label: `Preferencia ${p.preferredShift === "M" ? "mañana" : p.preferredShift === "T" ? "tarde" : "noche"}`,
-            fn: (x: ScheduleCandidate) =>
-              x.sections.length * 2_000 +
-              x.sections.filter((section) => section.turno === p.preferredShift).length * 5_000 -
-              x.gapMinutes -
-              x.days * 50,
-            explanation: "Maximiza las secciones disponibles en el turno elegido.",
-          },
-        ]
-      : []),
   ];
   const proposals = profiles
     .map((profile) => {
       const best = [...candidates].sort((a, b) => profile.fn(b) - profile.fn(a))[0];
       if (!best) return null;
+      const missingSubjects = Math.max(0, groups.length - best.sections.length);
+      const freeDayConflicts = p.freeDay
+        ? best.sections
+            .filter((section) => section.clases.some((clase) => clase.dia === p.freeDay))
+            .map((section) => section.materia)
+        : [];
+      const shiftFallbacks = p.preferredShift
+        ? best.sections
+            .filter((section) => section.turno !== p.preferredShift)
+            .map((section) => ({
+              subject: section.materia,
+              assignedShift: section.turno,
+              distance: shiftDistance(section.turno, p.preferredShift),
+            }))
+        : [];
       return {
         id: profile.label.toLowerCase().replace(/\s/g, "-"),
         label: profile.label,
-        score: Math.max(0, Math.round(profile.fn(best))),
+        score: Math.max(
+          0,
+          Math.min(
+            100,
+            100 -
+              missingSubjects * 20 -
+              best.freeDayViolations * 12 -
+              best.shiftDistance * 6 -
+              best.conflicts * 20,
+          ),
+        ),
         sections: best.sections,
         days: best.days,
         weeklyMinutes: best.weeklyMinutes,
         gapMinutes: best.gapMinutes,
         conflicts: best.conflicts,
+        requestedSubjects: groups.length,
+        freeDayConflicts: [...new Set(freeDayConflicts)],
+        shiftFallbacks,
         explanation: [
           profile.explanation,
-          p.preferredShift
-            ? `Prioriza el turno ${p.preferredShift}.${fallbackGroups ? ` ${fallbackGroups} materia(s) no tienen sección disponible en ese turno.` : ""}`
-            : "Sin preferencia de turno obligatoria.",
+          `${best.sections.length} de ${groups.length} materias seleccionadas · ${Math.round(best.gapMinutes / 60)} h libres entre clases.`,
         ],
       };
     })
@@ -211,5 +223,5 @@ export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProp
       .join("|");
     if (!unique.has(signature)) unique.set(signature, proposal);
   }
-  return [...unique.values()];
+  return [...unique.values()].slice(0, 2);
 }

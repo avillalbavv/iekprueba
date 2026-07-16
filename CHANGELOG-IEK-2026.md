@@ -30,3 +30,5 @@
 - Adaptado el centro de notificaciones a pantallas móviles, con cierre exterior, botón de cierre y soporte para Escape.
 - Corregida la detección de oferta para variantes de nombres del Excel y reforzada la preferencia de turno del generador de horarios.
 - Corregido el modo claro del mapa interactivo, incluyendo selector de énfasis, grafo, tabla, controles y modal de materias.
+- Agrupado el asistente del planificador por semestre, con selección masiva, animación de análisis y un máximo de dos propuestas.
+- Priorizada la inclusión de todas las materias, el día libre, el turno más cercano y la reducción de horas libres, con explicaciones por cada preferencia que no pueda cumplirse.
