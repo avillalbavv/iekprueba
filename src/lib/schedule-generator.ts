@@ -5,8 +5,10 @@ import {
   parseHora,
   type Seccion,
 } from "./poliplanner.ts";
+import { preferSectionsByShift } from "./schedule-preference.ts";
 export interface GeneratorPreferences {
   materiaIds: string[];
+  materiaIdGroups?: string[][];
   maxSubjects?: number;
   blocked?: { day: string; start: number; end: number }[];
   preferredShift?: "M" | "T" | "N";
@@ -51,6 +53,7 @@ function metrics(sections: Seccion[]) {
   };
 }
 function valid(section: Seccion, p: GeneratorPreferences) {
+  if (!section.clases.length) return false;
   if (p.freeDay && section.clases.some((c) => c.dia === p.freeDay)) return false;
   return !(p.blocked || []).some((b) =>
     section.clases.some((c) => {
@@ -60,26 +63,75 @@ function valid(section: Seccion, p: GeneratorPreferences) {
     }),
   );
 }
-function enumerate(
-  ids: string[],
-  p: GeneratorPreferences,
-  index = 0,
-  current: Seccion[] = [],
-  out: Seccion[][] = [],
-): Seccion[][] {
-  if (out.length > 300) return out;
-  if (index === ids.length) {
-    out.push([...current]);
-    return out;
+function optionsForGroup(ids: string[], p: GeneratorPreferences): Seccion[] {
+  const uniqueIds = new Set(ids);
+  const available = DATA.filter((section) => uniqueIds.has(section.materiaId) && valid(section, p));
+  return preferSectionsByShift(available, p.preferredShift);
+}
+
+function candidateRank(sections: Seccion[], p: GeneratorPreferences): number {
+  const value = metrics(sections);
+  const shiftMatches = p.preferredShift
+    ? sections.filter((section) => section.turno === p.preferredShift).length
+    : 0;
+  return (
+    sections.length * 100_000 +
+    shiftMatches * 5_000 -
+    value.conflicts * 50_000 -
+    value.days * 500 -
+    value.gapMinutes
+  );
+}
+
+function enumerate(groups: string[][], p: GeneratorPreferences): Seccion[][] {
+  const limit = 2_500;
+  let candidates: Seccion[][] = [[]];
+  for (const group of groups) {
+    const options = optionsForGroup(group, p);
+    const expanded: Seccion[][] = [];
+    for (const current of candidates) {
+      expanded.push(current);
+      for (const option of options) {
+        const next = [...current, option];
+        const value = metrics(next);
+        if (!p.allowOverlap && value.conflicts > 0) continue;
+        if (p.maxDays && value.days > p.maxDays) continue;
+        expanded.push(next);
+      }
+    }
+    const deduplicated = new Map<string, Seccion[]>();
+    for (const candidate of expanded) {
+      const key = candidate
+        .map((section) => section.id)
+        .sort()
+        .join("|");
+      if (!deduplicated.has(key)) deduplicated.set(key, candidate);
+    }
+    candidates = [...deduplicated.values()]
+      .sort((a, b) => candidateRank(b, p) - candidateRank(a, p))
+      .slice(0, limit);
   }
-  const options = DATA.filter((s) => s.materiaId === ids[index] && valid(s, p));
-  enumerate(ids, p, index + 1, current, out);
-  for (const option of options) enumerate(ids, p, index + 1, [...current, option], out);
-  return out;
+  return candidates;
 }
 export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProposal[] {
-  const ids = [...new Set(p.materiaIds)].slice(0, p.maxSubjects || 8);
-  const candidates = enumerate(ids, p)
+  const groups = (
+    p.materiaIdGroups?.length
+      ? p.materiaIdGroups.map((group) => [...new Set(group)])
+      : [...new Set(p.materiaIds)].map((id) => [id])
+  ).slice(0, p.maxSubjects || 8);
+  const fallbackGroups = p.preferredShift
+    ? groups.filter((group) => {
+        const ids = new Set(group);
+        const validSections = DATA.filter(
+          (section) => ids.has(section.materiaId) && valid(section, p),
+        );
+        return (
+          validSections.length > 0 &&
+          !validSections.some((section) => section.turno === p.preferredShift)
+        );
+      }).length
+    : 0;
+  const candidates = enumerate(groups, p)
     .filter((s) => s.length > 0)
     .map((sections) => ({ sections, ...metrics(sections) }))
     .filter(
@@ -96,7 +148,7 @@ export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProp
         x.gapMinutes -
         x.conflicts * 500 +
         (p.preferredShift
-          ? x.sections.filter((s) => s.turno === p.preferredShift).length * 100
+          ? x.sections.filter((s) => s.turno === p.preferredShift).length * 2_000
           : 0),
       explanation: "Equilibra materias, días y ventanas.",
     },
@@ -115,8 +167,21 @@ export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProp
       fn: (x: ScheduleCandidate) => x.sections.length * 2000 - x.conflicts * 1000 - x.gapMinutes,
       explanation: "Incluye la mayor cantidad posible sin conflictos bloqueantes.",
     },
+    ...(p.preferredShift
+      ? [
+          {
+            label: `Preferencia ${p.preferredShift === "M" ? "mañana" : p.preferredShift === "T" ? "tarde" : "noche"}`,
+            fn: (x: ScheduleCandidate) =>
+              x.sections.length * 2_000 +
+              x.sections.filter((section) => section.turno === p.preferredShift).length * 5_000 -
+              x.gapMinutes -
+              x.days * 50,
+            explanation: "Maximiza las secciones disponibles en el turno elegido.",
+          },
+        ]
+      : []),
   ];
-  return profiles
+  const proposals = profiles
     .map((profile) => {
       const best = [...candidates].sort((a, b) => profile.fn(b) - profile.fn(a))[0];
       if (!best) return null;
@@ -132,10 +197,19 @@ export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProp
         explanation: [
           profile.explanation,
           p.preferredShift
-            ? `Prioriza el turno ${p.preferredShift}.`
+            ? `Prioriza el turno ${p.preferredShift}.${fallbackGroups ? ` ${fallbackGroups} materia(s) no tienen sección disponible en ese turno.` : ""}`
             : "Sin preferencia de turno obligatoria.",
         ],
       };
     })
     .filter((x): x is ScheduleProposal => Boolean(x));
+  const unique = new Map<string, ScheduleProposal>();
+  for (const proposal of proposals) {
+    const signature = proposal.sections
+      .map((section) => section.id)
+      .sort()
+      .join("|");
+    if (!unique.has(signature)) unique.set(signature, proposal);
+  }
+  return [...unique.values()];
 }

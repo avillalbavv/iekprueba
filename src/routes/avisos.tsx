@@ -16,6 +16,13 @@ import { supabase } from "@/lib/supabase";
 export const Route = createFileRoute("/avisos")({ component: AvisosPage });
 
 const TIPOS = Object.keys(TIPO_CONFIG) as AvisoTipo[];
+const ORDEN_TIPOS: Record<AvisoTipo, number> = {
+  alerta: 0,
+  importante: 1,
+  comunicado: 2,
+  recordatorio: 3,
+  noticia: 4,
+};
 
 function AvisoCard({ aviso }: { aviso: Aviso }) {
   const [expandido, setExpandido] = useState(false);
@@ -67,7 +74,7 @@ function AvisosPage() {
     if (!supabase) return;
     supabase
       .from("admin_notices")
-      .select("id,title,summary,content,category,priority,publish_at")
+      .select("id,title,summary,content,category,priority,publish_at,created_at")
       .eq("status", "published")
       .then(({ data }) => {
         if (!data) return;
@@ -88,6 +95,7 @@ function AvisosPage() {
             resumen: row.summary,
             detalle: row.content || undefined,
             fecha: (row.publish_at || new Date().toISOString()).slice(0, 10),
+            publicadoEn: row.publish_at || row.created_at || undefined,
             destacado: row.priority === "urgente" || row.priority === "importante",
           })),
         );
@@ -98,9 +106,12 @@ function AvisosPage() {
     const ordenados = [
       ...new Map([...published, ...AVISOS].map((aviso) => [aviso.id, aviso])).values(),
     ].sort((a, b) => {
-      if (a.destacado && !b.destacado) return -1;
-      if (!a.destacado && b.destacado) return 1;
-      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+      const porTipo = ORDEN_TIPOS[a.tipo] - ORDEN_TIPOS[b.tipo];
+      if (porTipo !== 0) return porTipo;
+      const porPublicacion =
+        new Date(b.publicadoEn || `${b.fecha}T12:00:00`).getTime() -
+        new Date(a.publicadoEn || `${a.fecha}T12:00:00`).getTime();
+      return porPublicacion || b.id.localeCompare(a.id);
     });
     return filtro === "todos" ? ordenados : ordenados.filter((a) => a.tipo === filtro);
   }, [filtro, published]);

@@ -1,5 +1,6 @@
 import RAW from "@/data/poliplanner-horario-2026.json";
 import { normalizeAcademicName } from "./search";
+import { academicNamesMatch } from "./academic-offer-matcher";
 import { writeLocalState } from "./user-state";
 
 /* ───────────────────────── Tipos ───────────────────────── */
@@ -39,7 +40,9 @@ export interface Seccion {
   enfasis: string;
   docente: Docente;
   clases: ClaseInfo[];
-  examenes: Partial<Record<"parcial1" | "parcial2" | "final1" | "revision1" | "final2" | "revision2", ExamenInfo>>;
+  examenes: Partial<
+    Record<"parcial1" | "parcial2" | "final1" | "revision1" | "final2" | "revision2", ExamenInfo>
+  >;
   mesaExaminadora: { presidente: string; miembro1: string; miembro2: string };
 }
 
@@ -67,8 +70,8 @@ function materiaIdEstable(materia: string, semestre: string | number, plan: stri
 
 /** Oferta enriquecida: fuente común para planificador, exámenes y calculadoras. */
 export const DATA: Seccion[] = (RAW as Omit<Seccion, "materiaId" | "nombreNormalizado">[])
-  .filter(s => s.materia)
-  .map(s => {
+  .filter((s) => s.materia)
+  .map((s) => {
     const nombreNormalizado = normalizeAcademicName(s.materia);
     const semGrupo = SEMESTRES_CORREGIDOS[nombreNormalizado] ?? s.semGrupo;
     return {
@@ -93,7 +96,9 @@ const EXAMEN_LABEL: Record<string, string> = {
   final2: "2do Final",
   revision2: "Revisión 2",
 };
-export function examenLabel(key: string): string { return EXAMEN_LABEL[key] ?? key; }
+export function examenLabel(key: string): string {
+  return EXAMEN_LABEL[key] ?? key;
+}
 
 /* ───────────────────────── Semestre helper ───────────────────────── */
 
@@ -116,7 +121,13 @@ export function groupByMateria(data: Seccion[] = DATA): MateriaGroup[] {
   for (const s of data) {
     const key = s.materiaId;
     if (!map.has(key)) {
-      map.set(key, { id: s.materiaId, materia: s.materia, semestre: semestreLabel(s), plan: s.plan, secciones: [] });
+      map.set(key, {
+        id: s.materiaId,
+        materia: s.materia,
+        semestre: semestreLabel(s),
+        plan: s.plan,
+        secciones: [],
+      });
     }
     map.get(key)!.secciones.push(s);
   }
@@ -126,9 +137,21 @@ export function groupByMateria(data: Seccion[] = DATA): MateriaGroup[] {
 /* ───────────────────────── Paleta de colores por materia ───────────────────────── */
 
 const PALETTE = [
-  "#3b82f6", "#22d3ee", "#a78bfa", "#fb923c", "#34d399",
-  "#f472b6", "#facc15", "#f87171", "#818cf8", "#2dd4bf",
-  "#e879f9", "#4ade80", "#60a5fa", "#fbbf24", "#c084fc",
+  "#3b82f6",
+  "#22d3ee",
+  "#a78bfa",
+  "#fb923c",
+  "#34d399",
+  "#f472b6",
+  "#facc15",
+  "#f87171",
+  "#818cf8",
+  "#2dd4bf",
+  "#e879f9",
+  "#4ade80",
+  "#60a5fa",
+  "#fbbf24",
+  "#c084fc",
 ];
 
 export function colorForMateria(materia: string): string {
@@ -139,7 +162,10 @@ export function colorForMateria(materia: string): string {
 
 /* ───────────────────────── Parseo de horas y solapamiento ───────────────────────── */
 
-export interface TimeRange { start: number; end: number; }
+export interface TimeRange {
+  start: number;
+  end: number;
+}
 
 export function parseHora(hora: string): TimeRange | null {
   const m = hora.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
@@ -165,8 +191,18 @@ export const SOLAPAMIENTO_PERMITIDO_MIN = 30;
 
 /* ───────────────────────── Layout de solapamientos (vista semanal) ───────────────────────── */
 
-export interface LayoutInput<T> { item: T; start: number; end: number }
-export interface LayoutResult<T> { item: T; start: number; end: number; col: number; cols: number }
+export interface LayoutInput<T> {
+  item: T;
+  start: number;
+  end: number;
+}
+export interface LayoutResult<T> {
+  item: T;
+  start: number;
+  end: number;
+  col: number;
+  cols: number;
+}
 
 /**
  * Distribuye eventos que se solapan en el tiempo en columnas lado a lado
@@ -186,9 +222,17 @@ export function layoutDaySchedule<T>(items: LayoutInput<T>[]): LayoutResult<T>[]
     for (const it of cluster) {
       let placed = false;
       for (let c = 0; c < columnEnds.length; c++) {
-        if (columnEnds[c] <= it.start) { columnEnds[c] = it.end; withCol.push({ it, col: c }); placed = true; break; }
+        if (columnEnds[c] <= it.start) {
+          columnEnds[c] = it.end;
+          withCol.push({ it, col: c });
+          placed = true;
+          break;
+        }
       }
-      if (!placed) { columnEnds.push(it.end); withCol.push({ it, col: columnEnds.length - 1 }); }
+      if (!placed) {
+        columnEnds.push(it.end);
+        withCol.push({ it, col: columnEnds.length - 1 });
+      }
     }
     const cols = columnEnds.length;
     for (const { it, col } of withCol) result.push({ ...it, col, cols });
@@ -224,7 +268,8 @@ export function findScheduleConflicts(secciones: Seccion[]): ScheduleConflict[] 
   const conflicts: ScheduleConflict[] = [];
   for (let i = 0; i < secciones.length; i++) {
     for (let j = i + 1; j < secciones.length; j++) {
-      const a = secciones[i], b = secciones[j];
+      const a = secciones[i],
+        b = secciones[j];
       if (a.materiaId === b.materiaId) continue;
       for (const ca of a.clases) {
         const ra = parseHora(ca.hora);
@@ -235,7 +280,12 @@ export function findScheduleConflicts(secciones: Seccion[]): ScheduleConflict[] 
           if (!rb) continue;
           const overlapMin = overlapMinutes(ra, rb);
           if (overlapMin > SOLAPAMIENTO_PERMITIDO_MIN) {
-            conflicts.push({ dia: ca.dia as Dia, a: { seccion: a, clase: ca }, b: { seccion: b, clase: cb }, overlapMin });
+            conflicts.push({
+              dia: ca.dia as Dia,
+              a: { seccion: a, clase: ca },
+              b: { seccion: b, clase: cb },
+              overlapMin,
+            });
           }
         }
       }
@@ -275,7 +325,10 @@ export function listExamenes(secciones: Seccion[]): ExamEntry[] {
   return out.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
 }
 
-export interface ExamConflict { fecha: Date; entries: ExamEntry[]; }
+export interface ExamConflict {
+  fecha: Date;
+  entries: ExamEntry[];
+}
 
 /** Agrupa exámenes que caen el mismo día (incluso con distinta hora, para avisar con anticipación). */
 export function findExamConflicts(examenes: ExamEntry[]): ExamConflict[] {
@@ -287,7 +340,7 @@ export function findExamConflicts(examenes: ExamEntry[]): ExamConflict[] {
   }
   const conflicts: ExamConflict[] = [];
   for (const [, entries] of byDate) {
-    const materiasUnicas = new Set(entries.map(e => e.seccion.materiaId));
+    const materiasUnicas = new Set(entries.map((e) => e.seccion.materiaId));
     if (materiasUnicas.size > 1) {
       conflicts.push({ fecha: entries[0].fecha, entries });
     }
@@ -337,7 +390,7 @@ export function docenteNombre(d: Docente): string {
 
 /* ───────────────────────── Enlace malla curricular ↔ oferta del período ───────────────────────── */
 
-const NOMBRES_OFERTADOS = [...new Set(DATA.map(s => s.materia))];
+const NOMBRES_OFERTADOS = [...new Set(DATA.map((s) => s.materia))];
 
 /**
  * Dado el nombre de una materia de la malla curricular completa (que puede
@@ -350,14 +403,10 @@ const nombreOfertadoCache = new Map<string, string | null>();
 
 export function nombreOfertadoParaMalla(nombreMalla: string): string | null {
   if (nombreOfertadoCache.has(nombreMalla)) return nombreOfertadoCache.get(nombreMalla)!;
-  const norm = normalizeAcademicName(nombreMalla);
-  const exactos = NOMBRES_OFERTADOS.filter(n => normalizeAcademicName(n) === norm);
-  let resultado: string | null = exactos.length === 1 ? exactos[0] : null;
-  if (!resultado) {
-    // Compatibilidad para nombres ampliados, solo si existe un único candidato.
-    const candidatos = NOMBRES_OFERTADOS.filter(n => normalizeAcademicName(n).startsWith(`${norm} `));
-    if (candidatos.length === 1) resultado = candidatos[0];
-  }
+  const resultado =
+    NOMBRES_OFERTADOS.filter((name) => academicNamesMatch(nombreMalla, name)).sort((a, b) =>
+      a.localeCompare(b, "es"),
+    )[0] || null;
   nombreOfertadoCache.set(nombreMalla, resultado);
   return resultado;
 }
@@ -368,8 +417,14 @@ const seccionesPorMateriaCache = new Map<string, Seccion[]>();
 export function seccionesPorMateriaMalla(nombreMalla: string, plan = "2008"): Seccion[] {
   const cacheKey = `${plan}::${nombreMalla}`;
   if (seccionesPorMateriaCache.has(cacheKey)) return seccionesPorMateriaCache.get(cacheKey)!;
-  const nombreReal = nombreOfertadoParaMalla(nombreMalla);
-  const result = nombreReal ? DATA.filter(s => s.materia === nombreReal && s.plan === plan) : [];
+  const result = DATA.filter(
+    (section) => section.plan === plan && academicNamesMatch(nombreMalla, section.materia),
+  ).sort(
+    (a, b) =>
+      a.turno.localeCompare(b.turno) ||
+      a.seccion.localeCompare(b.seccion, "es") ||
+      (a.sourceRow || 0) - (b.sourceRow || 0),
+  );
   seccionesPorMateriaCache.set(cacheKey, result);
   return result;
 }
@@ -377,6 +432,13 @@ export function seccionesPorMateriaMalla(nombreMalla: string, plan = "2008"): Se
 /** Resumen corto del horario semanal de una sección, ej: "Lu 10:00-12:15 · Mi 10:00-12:15" */
 export function resumenHorario(s: Seccion): string {
   if (!s.clases.length) return "Sin clases presenciales registradas";
-  const abbr: Record<string, string> = { Lunes: "Lu", Martes: "Ma", Miércoles: "Mi", Jueves: "Ju", Viernes: "Vi", Sábado: "Sa" };
-  return s.clases.map(c => `${abbr[c.dia] ?? c.dia} ${c.hora}`).join(" · ");
+  const abbr: Record<string, string> = {
+    Lunes: "Lu",
+    Martes: "Ma",
+    Miércoles: "Mi",
+    Jueves: "Ju",
+    Viernes: "Vi",
+    Sábado: "Sa",
+  };
+  return s.clases.map((c) => `${abbr[c.dia] ?? c.dia} ${c.hora}`).join(" · ");
 }

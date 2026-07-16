@@ -26,3 +26,6 @@
 - Conectados los eventos, exámenes y recursos publicados desde el panel con sus respectivas páginas públicas.
 - Añadida la acción de publicación para eventos y recursos, manteniendo los borradores fuera de la vista estudiantil.
 - Separadas las operaciones administrativas de alta y edición, y reconstruidas las políticas de escritura mediante la migración 005.
+- Ordenados los avisos por tipo y, dentro de cada tipo, desde la publicación más reciente a la más antigua.
+- Adaptado el centro de notificaciones a pantallas móviles, con cierre exterior, botón de cierre y soporte para Escape.
+- Corregida la detección de oferta para variantes de nombres del Excel y reforzada la preferencia de turno del generador de horarios.

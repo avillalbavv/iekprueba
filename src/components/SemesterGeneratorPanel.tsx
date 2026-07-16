@@ -14,7 +14,14 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
   const offered = useMemo(
     () =>
       materias
-        .map((materia) => ({ materia, sections: seccionesPorMateriaMalla(materia.nombre) }))
+        .map((materia) => {
+          const sections = seccionesPorMateriaMalla(materia.nombre);
+          return {
+            materia,
+            sections,
+            schedulableSections: sections.filter((section) => section.clases.length > 0),
+          };
+        })
         .filter((entry) => entry.sections.length > 0),
     [materias],
   );
@@ -43,14 +50,16 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
   );
 
   function generate() {
-    const offeredIds = selected
-      .map(
-        (mallaId) => offered.find((entry) => entry.materia.id === mallaId)?.sections[0]?.materiaId,
-      )
-      .filter((id): id is string => Boolean(id));
+    const materiaIdGroups = selected
+      .map((mallaId) => {
+        const entry = offered.find((candidate) => candidate.materia.id === mallaId);
+        return [...new Set(entry?.schedulableSections.map((section) => section.materiaId) || [])];
+      })
+      .filter((group) => group.length > 0);
     setProposals(
       generateSemesterSchedules({
-        materiaIds: offeredIds,
+        materiaIds: materiaIdGroups.flat(),
+        materiaIdGroups,
         maxSubjects: 7,
         preferredShift: shift || undefined,
         freeDay: freeDay || undefined,
@@ -91,13 +100,18 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
           periodo.
         </p>
         <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
-          {offered.map(({ materia, sections }) => (
+          {offered.map(({ materia, sections, schedulableSections }) => (
             <label
               key={materia.id}
-              className="flex cursor-pointer gap-3 rounded-lg p-2 hover:bg-foreground/5"
+              className={`flex gap-3 rounded-lg p-2 ${
+                schedulableSections.length
+                  ? "cursor-pointer hover:bg-foreground/5"
+                  : "cursor-not-allowed opacity-65"
+              }`}
             >
               <input
                 type="checkbox"
+                disabled={!schedulableSections.length}
                 checked={selected.includes(materia.id)}
                 onChange={(event) =>
                   setSelected(
@@ -110,7 +124,9 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
               <span className="text-sm">
                 {materia.nombre}
                 <small className="block text-muted-foreground">
-                  {sections.length} sección{sections.length === 1 ? "" : "es"}
+                  {schedulableSections.length
+                    ? `${schedulableSections.length} sección${schedulableSections.length === 1 ? "" : "es"} con horario`
+                    : `${sections.length} sección${sections.length === 1 ? "" : "es"} · horario pendiente de confirmación`}
                 </small>
               </span>
             </label>
