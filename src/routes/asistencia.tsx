@@ -687,7 +687,7 @@ function MateriaDetalle({
                 )}
                 <SimRow
                   pregunta="¿Cuántas veces más puedo faltar sin bajar del 70%?"
-                  respuesta={`${sim.vecesQuePuedeFaltarManteniendoPrimera} vez${sim.vecesQuePuedeFaltarManteniendoPrimera === 1 ? "" : "es"} más.`}
+                  respuesta={`${sim.vecesQuePuedeFaltarManteniendoPrimera} ${sim.vecesQuePuedeFaltarManteniendoPrimera === 1 ? "vez" : "veces"} más.`}
                 />
                 {sim.clasesConsecutivasParaRecuperar70 !== null && (
                   <SimRow
