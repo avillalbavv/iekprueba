@@ -81,20 +81,39 @@ const MEGA_MENU = [
   },
 ];
 
-function ThemeToggle({ menu = false }: { menu?: boolean }) {
+function ThemeToggle() {
   const { theme, toggle } = useTheme();
   return (
     <button
       onClick={toggle}
       aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className={
-        menu
-          ? "flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-foreground/6 hover:text-foreground"
-          : "rounded-md p-2 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground"
-      }
+      className="rounded-md p-2 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground"
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      {menu && <span>{theme === "dark" ? "Usar modo claro" : "Usar modo oscuro"}</span>}
+    </button>
+  );
+}
+
+function MobileThemeSwitch() {
+  const { theme, toggle } = useTheme();
+  const dark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={dark}
+      aria-label={dark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+      title={dark ? "Modo oscuro" : "Modo claro"}
+      onClick={toggle}
+      className="relative inline-flex h-8 w-14 shrink-0 items-center rounded-full border border-border bg-foreground/10 p-1 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 xl:hidden"
+    >
+      <span
+        aria-hidden="true"
+        className={`grid h-6 w-6 place-items-center rounded-full bg-background text-foreground shadow-sm transition-transform duration-200 ${dark ? "translate-x-6" : "translate-x-0"}`}
+      >
+        {dark ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+      </span>
     </button>
   );
 }
@@ -219,7 +238,10 @@ export function SiteNavbar() {
             >
               <UserRound className="h-4 w-4" />
             </Link>
-            <ThemeToggle />
+            <div className="hidden xl:block">
+              <ThemeToggle />
+            </div>
+            <MobileThemeSwitch />
             <a
               href="https://www.pol.una.py/carreras/iek/"
               target="_blank"
