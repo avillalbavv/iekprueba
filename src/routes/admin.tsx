@@ -11,6 +11,7 @@ import {
   Mail,
   MessageSquare,
   ShieldCheck,
+  Trash2,
   Upload,
   Users,
 } from "lucide-react";
@@ -30,7 +31,7 @@ import {
   type AppRole,
   type RegisteredUser,
 } from "@/lib/admin-service";
-import { publishScheduleRevision } from "@/lib/schedule-update-service";
+import { deleteScheduleRevision, publishScheduleRevision } from "@/lib/schedule-update-service";
 import { analyzeScheduleFile, type ScheduleParseResult } from "@/lib/schedule-import-parser";
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 type Tab =
@@ -215,7 +216,12 @@ function AdminPage() {
               />
             )}
             {tab === "schedules" && (
-              <ScheduleUpdates rows={rows} reload={() => load("schedules")} perform={perform} />
+              <ScheduleUpdates
+                rows={rows}
+                canDelete={auth.role === "superadmin"}
+                reload={() => load("schedules")}
+                perform={perform}
+              />
             )}
             {tab === "messages" && (
               <ContactMessages
@@ -660,10 +666,12 @@ function ResourceManager({
 
 function ScheduleUpdates({
   rows,
+  canDelete,
   reload,
   perform,
 }: {
   rows: Record<string, unknown>[];
+  canDelete: boolean;
   reload: () => void;
   perform: AdminOperation;
 }) {
@@ -673,6 +681,7 @@ function ScheduleUpdates({
   const [parsing, setParsing] = useState(false);
   const [parseResult, setParseResult] = useState<ScheduleParseResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function chooseFile(next: File | null) {
     setFile(next);
@@ -704,6 +713,29 @@ function ScheduleUpdates({
         setSending(false);
       }
     }, `${parseResult.totalSections} secciones publicadas. Planificador, ¿Dónde rindo?, asistencia, promedio y exámenes usarán esta versión.`);
+  }
+
+  async function removeRevision(row: Record<string, unknown>) {
+    const id = String(row.id);
+    const revision = String(row.revision);
+    const active = Boolean(row.is_active);
+    const accepted = window.confirm(
+      `¿Eliminar definitivamente la versión ${revision}?${
+        active
+          ? " Es la versión activa: se restaurará la anterior o el horario incluido en la aplicación."
+          : ""
+      } Esta acción no se puede deshacer.`,
+    );
+    if (!accepted) return;
+    setDeletingId(id);
+    await perform(async () => {
+      try {
+        await deleteScheduleRevision(id);
+        await reload();
+      } finally {
+        setDeletingId(null);
+      }
+    }, `Versión ${revision} eliminada correctamente.`);
   }
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
@@ -772,11 +804,36 @@ function ScheduleUpdates({
       <div className="space-y-3">
         {rows.map((row) => (
           <article key={String(row.id)} className="glass rounded-2xl p-5">
-            <div className="flex justify-between gap-3">
-              <h3 className="font-semibold">Versión {String(row.revision)}</h3>
-              <span className="text-xs text-muted-foreground">
-                {new Date(String(row.published_at)).toLocaleString("es-PY")}
-              </span>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold">Versión {String(row.revision)}</h3>
+                {Boolean(row.is_active) && (
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">
+                    Activa
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs text-muted-foreground">
+                  {new Date(String(row.published_at)).toLocaleString("es-PY")}
+                </span>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => void removeRevision(row)}
+                    disabled={deletingId === String(row.id)}
+                    aria-label={`Eliminar versión ${String(row.revision)}`}
+                    title="Eliminar esta versión"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-500/25 text-red-500 transition hover:bg-red-500/10 disabled:opacity-50"
+                  >
+                    {deletingId === String(row.id) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">{String(row.change_summary)}</p>
             <p className="mt-2 text-xs text-muted-foreground/70">

@@ -26,6 +26,7 @@ Respaldá la base y ejecutá en SQL Editor, respetando este orden:
 5. `202607120005_admin_write_policy_repair.sql`
 6. `202607160001_schedule_dataset_publication.sql`
 7. `202607160002_contact_messages.sql`
+8. `202607160003_schedule_revision_deletion.sql`
 
 Después de aplicar cambios de esquema, podés forzar la recarga de PostgREST con:
 
@@ -41,6 +42,7 @@ Las migraciones crean, entre otras entidades:
 - planes y sesiones de estudio;
 - notificaciones y semestres archivados;
 - revisiones versionadas de horarios;
+- eliminación y restauración segura de revisiones por el superadministrador;
 - mensajes de contacto con límite anti-spam y bandeja administrativa;
 - funciones administrativas y registro de auditoría.
 

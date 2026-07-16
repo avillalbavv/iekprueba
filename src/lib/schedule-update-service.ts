@@ -1,7 +1,7 @@
 import { supabase } from "./supabase.ts";
 import { upsertNotification } from "./notification-service.ts";
 import { writeLocalState } from "./user-state.ts";
-import { DATA, replaceScheduleData, type Seccion } from "./poliplanner.ts";
+import { DATA, replaceScheduleData, resetScheduleData, type Seccion } from "./poliplanner.ts";
 import { compareScheduleDatasets } from "./schedule-dataset-diff.ts";
 
 export { compareScheduleDatasets } from "./schedule-dataset-diff.ts";
@@ -59,9 +59,17 @@ export async function hydratePublishedScheduleData(): Promise<void> {
     .order("revision", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error || !data || !Array.isArray(data.sections) || !data.sections.length) return;
+  if (error) return;
+  if (!data || !Array.isArray(data.sections) || !data.sections.length) {
+    resetScheduleData();
+    localStorage.removeItem(DATA_CACHE_KEY);
+    window.dispatchEvent(new CustomEvent("iek:schedule-data-updated", { detail: 0 }));
+    return;
+  }
   const revision = Number(data.revision) || 0;
-  if (revision >= cachedRevision)
+  // También acepta una revisión menor cuando el superadministrador eliminó la activa y restauró
+  // una versión anterior de forma intencional.
+  if (revision !== cachedRevision)
     activateDataset({ revision, sections: data.sections as Seccion[] });
 }
 
@@ -80,7 +88,7 @@ export async function checkScheduleUpdates(): Promise<ScheduleRevision | null> {
   const revision = data as ScheduleRevision;
   await hydratePublishedScheduleData();
   const acknowledged = Number(localStorage.getItem(ACK_KEY) || 0);
-  if (revision.revision <= acknowledged) return null;
+  if (revision.revision === acknowledged) return null;
   let selection: { materiaIds: string[]; secciones: Record<string, string> } = {
     materiaIds: [],
     secciones: {},
@@ -191,4 +199,33 @@ export async function publishScheduleRevision(
     .not("sections", "is", null);
   activateDataset({ revision: Number(revision.revision), sections: delta.sections });
   return delta.sections.length;
+}
+
+interface DeletedScheduleRevision {
+  file_path: string;
+  was_active: boolean;
+  restored_revision: number | null;
+}
+
+/** Elimina una revisión mediante la operación protegida y restaura la fuente anterior si existe. */
+export async function deleteScheduleRevision(revisionId: string): Promise<void> {
+  if (!supabase) throw new Error("Supabase no está configurado");
+  const { data, error } = await supabase.rpc("delete_schedule_revision", {
+    p_revision_id: revisionId,
+  });
+  if (error) throw error;
+  const deleted = (Array.isArray(data) ? data[0] : data) as DeletedScheduleRevision | null;
+  if (!deleted) throw new Error("No se encontró la versión de horario.");
+
+  if (deleted.file_path) {
+    const { error: storageError } = await supabase.storage
+      .from("schedule-imports")
+      .remove([deleted.file_path]);
+    if (storageError) console.warn("No se pudo limpiar el archivo de la revisión:", storageError);
+  }
+  if (deleted.was_active && typeof window !== "undefined") {
+    localStorage.removeItem(DATA_CACHE_KEY);
+    localStorage.removeItem(ACK_KEY);
+    await hydratePublishedScheduleData();
+  }
 }

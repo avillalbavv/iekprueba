@@ -61,10 +61,12 @@ export interface MateriaGroup {
 
 /* ───────────────────────── Datos ───────────────────────── */
 
-/** Oferta enriquecida y mutable en el lugar: fuente común para todas las herramientas. */
-export const DATA: Seccion[] = normalizeScheduleData(
+const BUNDLED_DATA: Seccion[] = normalizeScheduleData(
   RAW as Omit<Seccion, "materiaId" | "nombreNormalizado">[],
 );
+
+/** Oferta enriquecida y mutable en el lugar: fuente común para todas las herramientas. */
+export const DATA: Seccion[] = [...BUNDLED_DATA];
 
 /** Sustituye la oferta completa sin romper las referencias importadas por otros módulos. */
 export function replaceScheduleData(source: Seccion[]): void {
@@ -74,6 +76,11 @@ export function replaceScheduleData(source: Seccion[]): void {
   nombreOfertadoCache.clear();
   seccionesPorMateriaCache.clear();
   seccionesCursablesCache.clear();
+}
+
+/** Recupera la oferta incluida en la aplicación cuando no queda una revisión remota activa. */
+export function resetScheduleData(): void {
+  replaceScheduleData(BUNDLED_DATA);
 }
 
 export const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const;

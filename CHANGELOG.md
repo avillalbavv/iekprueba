@@ -18,6 +18,7 @@
 - Reemplazado el criterio de asteriscos por la existencia real de horarios para determinar oferta.
 - Añadida comparación entre revisiones con identificadores estables y avisos solo para secciones
   afectadas.
+- Añadida eliminación protegida de versiones de horario, restauración automática y auditoría.
 - Conectada la revisión activa de horarios con Planificador, Dónde rindo, calendario y asistencia.
 - Reparadas políticas RLS para publicar avisos, eventos, exámenes, recursos y horarios.
 - Añadidas notificaciones por cambios en la fuente académica y auditoría de operaciones.
