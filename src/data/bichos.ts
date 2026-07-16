@@ -73,7 +73,7 @@ export const BICHOS: Bicho[] = [
     resumen:
       "Inscripciones, homologaciones, anulaciones, parciales y finales tienen plazos oficiales.",
     detalle:
-      "El calendario académico aprobado por el Consejo Directivo define las fechas de cada periodo. IEK Connect las resume, pero ante una diferencia siempre prevalece la publicación oficial vigente.",
+      "El calendario académico aprobado por el Consejo Directivo define las fechas de cada periodo. La Web de la Delegación las resume, pero ante una diferencia siempre prevalece la publicación oficial vigente.",
     pasos: [
       "Revisá el calendario al inicio del periodo.",
       "Anotá apertura y cierre de los trámites que te afecten.",
@@ -300,7 +300,7 @@ export const BICHOS: Bicho[] = [
     resumen:
       "Usá el horario oficial y las actualizaciones de la Delegación; revisá nuevamente antes de salir.",
     detalle:
-      "FP-UNA publica horarios de clases, parciales y finales por periodo. IEK Connect organiza esos datos para tu sección, pero una recalendarización o cambio de aula debe contrastarse con la fuente oficial.",
+      "FP-UNA publica horarios de clases, parciales y finales por periodo. La Web de la Delegación organiza esos datos para tu sección, pero una recalendarización o cambio de aula debe contrastarse con la fuente oficial.",
     pasos: [
       "Guardá tu sección exacta en el planificador.",
       "Consultá el calendario personalizado de exámenes.",

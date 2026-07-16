@@ -6,13 +6,14 @@ import {
   parseHora,
   type Seccion,
 } from "./poliplanner.ts";
-import { shiftDistance } from "./schedule-preference.ts";
+import { shiftDistanceToPreferences, type AcademicShift } from "./schedule-preference.ts";
 export interface GeneratorPreferences {
   materiaIds: string[];
   materiaIdGroups?: string[][];
   maxSubjects?: number;
   blocked?: { day: string; start: number; end: number }[];
   preferredShift?: "M" | "T" | "N";
+  preferredShifts?: AcademicShift[];
   freeDay?: string;
   maxDays?: number;
   allowOverlap?: boolean;
@@ -33,6 +34,11 @@ export interface ScheduleProposal {
   explanation: string[];
 }
 type ScheduleCandidate = ReturnType<typeof metrics> & { sections: Seccion[] };
+function preferredShifts(p: GeneratorPreferences): AcademicShift[] {
+  if (p.preferredShifts?.length) return [...new Set(p.preferredShifts)];
+  return p.preferredShift ? [p.preferredShift] : [];
+}
+
 function metrics(sections: Seccion[], p: GeneratorPreferences) {
   const byDay = new Map<string, { start: number; end: number }[]>();
   let weeklyMinutes = 0;
@@ -57,9 +63,9 @@ function metrics(sections: Seccion[], p: GeneratorPreferences) {
     freeDayViolations: p.freeDay
       ? sections.filter((section) => section.clases.some((clase) => clase.dia === p.freeDay)).length
       : 0,
-    shiftDistance: p.preferredShift
+    shiftDistance: preferredShifts(p).length
       ? sections.reduce(
-          (total, section) => total + shiftDistance(section.turno, p.preferredShift),
+          (total, section) => total + shiftDistanceToPreferences(section.turno, preferredShifts(p)),
           0,
         )
       : 0,
@@ -83,7 +89,8 @@ function optionsForGroup(ids: string[], p: GeneratorPreferences): Seccion[] {
     const bFreeDay = p.freeDay && b.clases.some((clase) => clase.dia === p.freeDay) ? 1 : 0;
     return (
       aFreeDay - bFreeDay ||
-      shiftDistance(a.turno, p.preferredShift) - shiftDistance(b.turno, p.preferredShift) ||
+      shiftDistanceToPreferences(a.turno, preferredShifts(p)) -
+        shiftDistanceToPreferences(b.turno, preferredShifts(p)) ||
       a.seccion.localeCompare(b.seccion, "es")
     );
   });
@@ -178,13 +185,14 @@ export function generateSemesterSchedules(p: GeneratorPreferences): ScheduleProp
             .filter((section) => section.clases.some((clase) => clase.dia === p.freeDay))
             .map((section) => section.materia)
         : [];
-      const shiftFallbacks = p.preferredShift
+      const acceptedShifts = preferredShifts(p);
+      const shiftFallbacks = acceptedShifts.length
         ? best.sections
-            .filter((section) => section.turno !== p.preferredShift)
+            .filter((section) => !acceptedShifts.includes(section.turno as AcademicShift))
             .map((section) => ({
               subject: section.materia,
               assignedShift: section.turno,
-              distance: shiftDistance(section.turno, p.preferredShift),
+              distance: shiftDistanceToPreferences(section.turno, acceptedShifts),
             }))
         : [];
       return {

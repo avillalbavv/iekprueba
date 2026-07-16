@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
+import { ScheduleDataBootstrap } from "@/components/ScheduleDataBootstrap";
 
 function NotFoundComponent() {
   return (
@@ -71,11 +72,13 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <QueryClientProvider client={queryClient}>
-          <Outlet />
-        </QueryClientProvider>
-      </AuthProvider>
+      <ScheduleDataBootstrap>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <Outlet />
+          </QueryClientProvider>
+        </AuthProvider>
+      </ScheduleDataBootstrap>
     </ThemeProvider>
   );
 }

@@ -46,6 +46,7 @@ function CuentaPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -68,6 +69,7 @@ function CuentaPage() {
       if (mode === "login") {
         await auth.signIn(email.trim(), password);
       } else {
+        if (password !== confirmPassword) throw new Error("Las contraseñas no coinciden");
         const result = await auth.signUp(email.trim(), password, displayName);
         setMessage(result.needsConfirmation
           ? "Revisá tu correo para confirmar la cuenta. Después podrás iniciar sesión."
@@ -150,13 +152,34 @@ function CuentaPage() {
           <Reveal>
             <div className="mx-auto mt-10 max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
               <div className="mb-6 grid grid-cols-2 rounded-xl bg-muted/50 p-1">
-                <button onClick={() => setMode("login")} className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "login" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Iniciar sesión</button>
-                <button onClick={() => setMode("signup")} className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Crear cuenta</button>
+                <button onClick={() => { setMode("login"); setConfirmPassword(""); setError(null); setMessage(null); }} className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "login" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Iniciar sesión</button>
+                <button onClick={() => { setMode("signup"); setConfirmPassword(""); setError(null); setMessage(null); }} className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Crear cuenta</button>
+              </div>
+              <div className="mb-5 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs leading-relaxed text-muted-foreground">
+                {mode === "login" ? (
+                  <p><strong className="text-foreground">Para ingresar:</strong> usá el mismo correo y contraseña con los que creaste la cuenta. Si recién te registraste, confirmá primero el enlace recibido por correo.</p>
+                ) : (
+                  <ol className="space-y-1">
+                    <li><strong className="text-foreground">1.</strong> Ingresá un correo al que tengas acceso.</li>
+                    <li><strong className="text-foreground">2.</strong> Creá y repetí una contraseña de al menos 8 caracteres.</li>
+                    <li><strong className="text-foreground">3.</strong> Abrí el correo de confirmación y después iniciá sesión.</li>
+                  </ol>
+                )}
               </div>
               <form onSubmit={submit} className="space-y-4">
                 {mode === "signup" && <Field label="Nombre (opcional)" value={displayName} onChange={setDisplayName} autoComplete="name" />}
                 <Field label="Correo" type="email" value={email} onChange={setEmail} autoComplete="email" placeholder="tu-correo@ejemplo.com" />
                 <Field label="Contraseña" type="password" value={password} onChange={setPassword} autoComplete={mode === "login" ? "current-password" : "new-password"} />
+                {mode === "signup" && (
+                  <>
+                    <Field label="Confirmar contraseña" type="password" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
+                    {confirmPassword && (
+                      <p className={`text-xs ${password === confirmPassword ? "text-emerald-500" : "text-amber-500"}`}>
+                        {password === confirmPassword ? "Las contraseñas coinciden." : "Las contraseñas todavía no coinciden."}
+                      </p>
+                    )}
+                  </>
+                )}
                 {error && <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</p>}
                 {message && <p className="rounded-xl bg-emerald-500/10 px-3 py-2 text-xs text-emerald-400">{message}</p>}
                 <button disabled={busy} className="btn-premium flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50">

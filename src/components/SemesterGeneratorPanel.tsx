@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Check, Clock3, LoaderCircle, Sparkles, TriangleAlert } from "lucide-react";
 import type { MateriaMalla } from "@/lib/malla-curricular";
-import { esSeccionSoloExamen, seccionesCursablesPorMateriaMalla, seccionesPorMateriaMalla } from "@/lib/poliplanner";
+import {
+  esSeccionSoloExamen,
+  seccionesCursablesPorMateriaMalla,
+  seccionesPorMateriaMalla,
+} from "@/lib/poliplanner";
 import { generateSemesterSchedules, type ScheduleProposal } from "@/lib/schedule-generator";
-import { shiftDistance } from "@/lib/schedule-preference";
+import { shiftDistanceToPreferences, type AcademicShift } from "@/lib/schedule-preference";
 
 interface Props {
   materias: MateriaMalla[];
@@ -32,7 +36,7 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
       offered.some((entry) => entry.materia.id === id && entry.schedulableSections.length > 0),
     ),
   );
-  const [shift, setShift] = useState<"" | "M" | "T" | "N">("");
+  const [shift, setShift] = useState<"" | "M" | "T" | "N" | "MT" | "TN" | "NM">("");
   const [freeDay, setFreeDay] = useState("");
   const [proposals, setProposals] = useState<ScheduleProposal[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -40,6 +44,7 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
   const [analysisStep, setAnalysisStep] = useState(0);
   const generationTimer = useRef<number | null>(null);
   const analysisTimer = useRef<number | null>(null);
+  const preferredShifts = useMemo(() => (shift ? ([...shift] as AcademicShift[]) : []), [shift]);
 
   useEffect(() => {
     setSelected((current) =>
@@ -109,14 +114,17 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
     setProposals([]);
     if (generationTimer.current) window.clearTimeout(generationTimer.current);
     if (analysisTimer.current) window.clearInterval(analysisTimer.current);
-    analysisTimer.current = window.setInterval(() => setAnalysisStep(step => Math.min(step + 1, 3)), 280);
+    analysisTimer.current = window.setInterval(
+      () => setAnalysisStep((step) => Math.min(step + 1, 3)),
+      280,
+    );
     generationTimer.current = window.setTimeout(() => {
       setProposals(
         generateSemesterSchedules({
           materiaIds: materiaIdGroups.flat(),
           materiaIdGroups,
           maxSubjects: selected.length,
-          preferredShift: shift || undefined,
+          preferredShifts: preferredShifts.length ? preferredShifts : undefined,
           freeDay: freeDay || undefined,
           maxDays: 6,
           allowOverlap: false,
@@ -131,12 +139,6 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
   }
 
   function apply(proposal: ScheduleProposal) {
-    if (
-      !confirm(
-        "¿Aplicar esta propuesta al horario actual? Tus notas y registros de asistencia no se eliminarán.",
-      )
-    )
-      return;
     const materiaIds = proposal.sections
       .map((section) => sectionToMalla.get(section.materiaId))
       .filter((id): id is string => Boolean(id));
@@ -236,6 +238,9 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
               <option value="M">Mañana</option>
               <option value="T">Tarde</option>
               <option value="N">Noche</option>
+              <option value="MT">Mañana + tarde</option>
+              <option value="TN">Tarde + noche</option>
+              <option value="NM">Noche + mañana</option>
             </select>
           </label>
           <label className="text-xs">
@@ -278,16 +283,22 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
             </div>
             <h3 className="mt-4 font-display font-semibold">Análisis inteligente del horario</h3>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              {[
-                "Leyendo las materias y secciones reales del periodo…",
-                "Comparando turnos y el día libre solicitado…",
-                "Descartando choques y secciones solo para examen…",
-                "Minimizando las horas libres entre clases…",
-              ][analysisStep]}
+              {
+                [
+                  "Leyendo las materias y secciones reales del periodo…",
+                  "Comparando turnos y el día libre solicitado…",
+                  "Descartando choques y secciones solo para examen…",
+                  "Minimizando las horas libres entre clases…",
+                ][analysisStep]
+              }
             </p>
             <div className="mx-auto mt-5 flex max-w-xs gap-1" aria-hidden="true">
-              {[0, 1, 2, 3].map(step => <span key={step}
-                className={`h-1.5 flex-1 rounded-full transition-colors ${step <= analysisStep ? "bg-primary" : "bg-foreground/10"}`} />)}
+              {[0, 1, 2, 3].map((step) => (
+                <span
+                  key={step}
+                  className={`h-1.5 flex-1 rounded-full transition-colors ${step <= analysisStep ? "bg-primary" : "bg-foreground/10"}`}
+                />
+              ))}
             </div>
             <p className="mt-3 text-[11px] text-muted-foreground/80">
               Cálculo local y determinista; no comparte tus preferencias con servicios externos.
@@ -359,9 +370,10 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
                         section.materia,
                     )
                 : [];
-              const preferredShift = shift || undefined;
-              const shiftFallbacks = preferredShift
-                ? proposal.sections.filter((section) => section.turno !== preferredShift)
+              const shiftFallbacks = preferredShifts.length
+                ? proposal.sections.filter(
+                    (section) => !preferredShifts.includes(section.turno as AcademicShift),
+                  )
                 : [];
               const shiftLabel: Record<string, string> = {
                 M: "mañana",
@@ -397,13 +409,13 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
                     const mallaId = sectionToMalla.get(section.materiaId) || "";
                     const subject = mallaNameById.get(mallaId) || section.materia;
                     const entry = offered.find((candidate) => candidate.materia.id === mallaId);
-                    const hasPreferred = entry?.schedulableSections.some(
-                      (candidate) => candidate.turno === preferredShift,
+                    const hasPreferred = entry?.schedulableSections.some((candidate) =>
+                      preferredShifts.includes(candidate.turno as AcademicShift),
                     );
                     const hasCloserAlternative = entry?.schedulableSections.some(
                       (candidate) =>
-                        shiftDistance(candidate.turno, preferredShift) <
-                        shiftDistance(section.turno, preferredShift),
+                        shiftDistanceToPreferences(candidate.turno, preferredShifts) <
+                        shiftDistanceToPreferences(section.turno, preferredShifts),
                     );
                     return (
                       <div
@@ -416,7 +428,7 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
                           {shiftLabel[section.turno] || section.turno}
                           {hasPreferred || hasCloserAlternative
                             ? ` para conservar más materias y evitar choques.`
-                            : ` porque no tiene sección de ${shiftLabel[preferredShift || ""]}; es el turno viable más cercano.`}
+                            : ` porque no tiene sección en ${preferredShifts.map((item) => shiftLabel[item]).join(" o ")}; es el turno viable más cercano.`}
                         </span>
                       </div>
                     );
@@ -438,7 +450,7 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
               onClick={() => apply(proposal)}
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
             >
-              <Check className="h-4 w-4" /> Aplicar al horario
+              <Check className="h-4 w-4" /> Usar esta propuesta
             </button>
           </article>
         ))}

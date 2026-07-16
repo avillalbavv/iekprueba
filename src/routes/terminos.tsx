@@ -28,9 +28,9 @@ function TermsPage() {
               Carácter orientativo
             </h2>
             <p className="mt-2">
-              IEK Connect Hub es una plataforma estudiantil de apoyo. La información mostrada no
-              reemplaza resoluciones, sistemas académicos, Secretaría Académica ni otros canales
-              oficiales de la FP-UNA.
+              La Web de la Delegación Estudiantil de Ingeniería Electrónica es una plataforma de
+              apoyo. La información mostrada no reemplaza resoluciones, sistemas académicos,
+              Secretaría Académica ni otros canales oficiales de la FP-UNA.
             </p>
           </section>
           <section>

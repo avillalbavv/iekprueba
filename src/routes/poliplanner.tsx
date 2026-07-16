@@ -80,6 +80,18 @@ export const Route = createFileRoute("/poliplanner")({ component: PoliPlannerPag
 /** Misma clave que usa /mapa — si ya elegiste énfasis ahí, se respeta acá. */
 const STORAGE_KEY_ENFASIS = "iek-mapa-enfasis-seleccionado";
 
+function plannerSignature(
+  enfasis: string | null,
+  materiaIds: string[],
+  sections: Record<string, string>,
+): string {
+  return JSON.stringify({
+    enfasis,
+    materiaIds: [...materiaIds].sort(),
+    sections: Object.entries(sections).sort(([a], [b]) => a.localeCompare(b)),
+  });
+}
+
 const EXAM_GROUPS: {
   key: "parcial1" | "parcial2" | "final1" | "final2";
   label: string;
@@ -103,6 +115,7 @@ function PoliPlannerPage() {
   const [view, setView] = useState<"semanal" | "lista">("semanal");
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [plannerMode, setPlannerMode] = useState<"manual" | "smart">("manual");
+  const [confirmedSignature, setConfirmedSignature] = useState("");
 
   useEffect(() => {
     const sel = loadSelection();
@@ -113,13 +126,13 @@ function PoliPlannerPage() {
       setMateriaIds(sel.materiaIds);
       setChoice(sel.secciones);
       setOpenSemestres([]);
+      setConfirmedSignature(plannerSignature(enfasisGuardado, sel.materiaIds, sel.secciones));
     }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    saveSelection({ enfasis, materiaIds, secciones: choice });
     if (enfasis) {
       try {
         writeLocalState(STORAGE_KEY_ENFASIS, enfasis);
@@ -127,7 +140,7 @@ function PoliPlannerPage() {
         /* ignore */
       }
     }
-  }, [enfasis, materiaIds, choice, hydrated]);
+  }, [enfasis, hydrated]);
 
   const malla = useMemo(() => (enfasis ? mallaAgrupadaPorSemestre(enfasis) : []), [enfasis]);
   const materiasDisponibles = useMemo(() => malla.flatMap((group) => group.materias), [malla]);
@@ -197,6 +210,18 @@ function PoliPlannerPage() {
       return;
     setMateriaIds([]);
     setChoice({});
+    saveSelection({ enfasis, materiaIds: [], secciones: {} });
+    setConfirmedSignature("");
+  }
+
+  function confirmarHorario() {
+    if (!enfasis || !materiaIds.length || pendientes > 0 || conflicts.length > 0) return;
+    const selection = { enfasis, materiaIds, secciones: choice };
+    saveSelection(selection);
+    setConfirmedSignature(plannerSignature(enfasis, materiaIds, choice));
+    setSyncMsg(
+      "Horario confirmado. Ya está disponible para ¿Dónde rindo?, el calendario y la sincronización.",
+    );
   }
 
   function enviarAAsistencia() {
@@ -247,6 +272,8 @@ function PoliPlannerPage() {
   const examenes = useMemo(() => listExamenes(chosenSecciones), [chosenSecciones]);
   const examConflicts = useMemo(() => findExamConflicts(examenes), [examenes]);
   const pendientes = materiaIds.filter((id) => !choice[id]).length;
+  const currentSignature = plannerSignature(enfasis, materiaIds, choice);
+  const horarioConfirmado = Boolean(confirmedSignature && confirmedSignature === currentSignature);
 
   return (
     <div className="min-h-screen">
@@ -367,17 +394,32 @@ function PoliPlannerPage() {
                   )}
                 </div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
-                  <ExportButtons
-                    secciones={chosenSecciones}
-                    disabled={chosenSecciones.length === 0}
-                  />
-                  <button
-                    onClick={enviarAAsistencia}
-                    disabled={chosenSecciones.length === 0}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs text-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <CalendarCheck2 className="h-3.5 w-3.5" /> Enviar a Asistencia
-                  </button>
+                  {horarioConfirmado ? (
+                    <>
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                        <Check className="h-3.5 w-3.5" /> Horario confirmado
+                      </span>
+                      <ExportButtons
+                        secciones={chosenSecciones}
+                        disabled={chosenSecciones.length === 0}
+                      />
+                      <button
+                        onClick={enviarAAsistencia}
+                        disabled={chosenSecciones.length === 0}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs text-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <CalendarCheck2 className="h-3.5 w-3.5" /> Enviar a Asistencia
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={confirmarHorario}
+                      disabled={!materiaIds.length || pendientes > 0 || conflicts.length > 0}
+                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <CalendarCheck2 className="h-4 w-4" /> Confirmar horario
+                    </button>
+                  )}
                   {materiaIds.length > 0 && (
                     <button
                       onClick={limpiarTodo}
@@ -389,6 +431,15 @@ function PoliPlannerPage() {
                   )}
                 </div>
               </div>
+              {!horarioConfirmado && materiaIds.length > 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {pendientes > 0
+                    ? `Elegí una sección para ${pendientes} materia${pendientes === 1 ? "" : "s"}.`
+                    : conflicts.length > 0
+                      ? "Resolvé los choques antes de confirmar."
+                      : "La vista es una previsualización. Confirmá para guardarla y habilitar sus acciones."}
+                </p>
+              )}
               {syncMsg && (
                 <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs text-foreground">
                   <span>{syncMsg}</span>
@@ -715,7 +766,7 @@ function MateriaChip({
       <span className="min-w-0 flex-1">
         <span className="block truncate leading-snug">{materia.nombre}</span>
         <span className="text-[11px] text-muted-foreground">
-          {departamentos.length ? `Dpto. ${departamentos.join(" · ")}` : "Departamento pendiente"}
+          {departamentos.length ? departamentos.join(" · ") : "Área pendiente"}
           {!ofertada ? " · no ofertada este período" : ""}
         </span>
       </span>
@@ -1590,7 +1641,7 @@ function buildICS(secciones: Seccion[]): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//IEK Connect Hub//Planificador IEK//ES",
+    "PRODID:-//Delegación Estudiantil IEK//Planificador IEK//ES",
     "CALSCALE:GREGORIAN",
   ];
 

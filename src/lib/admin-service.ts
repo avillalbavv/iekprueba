@@ -29,7 +29,7 @@ export function adminErrorMessage(error: unknown): string {
   if (normalized.includes("row-level security") || normalized.includes("permission denied"))
     return `Supabase rechazó la operación por permisos. Verificá que tu rol esté activo y ejecutá la migración administrativa 005.${suffix}`;
   if (normalized.includes("does not exist") || normalized.includes("could not find the table"))
-    return "Falta una tabla o función administrativa en Supabase. Ejecutá las migraciones 001 a 004 en orden.";
+    return "Falta una tabla, columna o función en Supabase. Ejecutá todas las migraciones pendientes, incluida 202607160001_schedule_dataset_publication.sql.";
   if (normalized.includes("jwt") || normalized.includes("session"))
     return "La sesión venció. Cerrá sesión, volvé a ingresar y repetí la operación.";
   return raw;
@@ -58,6 +58,17 @@ export async function revokeRole(userId: string, note = "") {
   if (error) throw error;
 }
 export async function listAdminRows(table: string) {
+  if (table === "schedule_revisions") {
+    const { data, error } = await client()
+      .from(table)
+      .select(
+        "id,revision,file_name,change_summary,published_at,is_active,section_count,source_format",
+      )
+      .order("revision", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return (data || []) as Record<string, unknown>[];
+  }
   const { data, error } = await client().from(table).select("*").limit(100);
   if (error) throw error;
   return data || [];

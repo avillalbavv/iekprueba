@@ -163,7 +163,7 @@ function AulaCard({ seccion }: { seccion: Seccion }) {
             </span>
             {seccion.departamento && (
               <span className="rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-[10px] text-muted-foreground">
-                Dpto. {seccion.departamento}
+                {seccion.departamento}
               </span>
             )}
             {esSeccionSoloExamen(seccion) && (
@@ -468,7 +468,7 @@ function AulasPage() {
         date: entry.fecha,
         time: entry.info.hora || "",
         room: entry.info.aula || "",
-        detail: `${examenLabel(entry.tipo)} · Sección ${entry.seccion.seccion}${entry.seccion.departamento ? ` · Dpto. ${entry.seccion.departamento}` : ""}`,
+        detail: `${examenLabel(entry.tipo)} · Sección ${entry.seccion.seccion}${entry.seccion.departamento ? ` · ${entry.seccion.departamento}` : ""}`,
         official: false,
       }));
     const delegationEvents: CalendarExam[] = examenesDelegacion

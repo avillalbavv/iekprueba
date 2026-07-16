@@ -121,7 +121,7 @@ function AsistenciaPage() {
       <main>
         <section className="relative overflow-hidden pt-16 pb-12 sm:pt-24">
           <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
-          <div className="mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <Reveal className="max-w-3xl">
               <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
                 <Link to="/" className="transition-colors hover:text-foreground">
@@ -150,7 +150,7 @@ function AsistenciaPage() {
         </section>
 
         <section className="pb-24">
-          <div className="mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
             {selected ? (
               <MateriaDetalle
                 materia={selected}
@@ -306,12 +306,12 @@ function MateriaFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-8"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-3 py-5 sm:px-4 sm:py-8"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-2xl sm:p-6"
       >
         <div className="mb-5 flex items-center justify-between">
           <h3 className="font-display text-lg font-semibold text-foreground">Nueva materia</h3>
@@ -358,7 +358,7 @@ function MateriaFormModal({
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                 Carrera (opcional)
@@ -570,7 +570,7 @@ function MateriaDetalle({
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-2">
           <Reveal>
-            <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">Estado actual</p>
                 <span
@@ -627,7 +627,7 @@ function MateriaDetalle({
 
           {materia.practicasLab && stats.labStats && (
             <Reveal>
-              <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
                 <div className="mb-3 flex items-center gap-2">
                   <FlaskConical className="h-4 w-4 text-primary" />
                   <p className="text-sm font-semibold text-foreground">Prácticas de laboratorio</p>
@@ -636,7 +636,7 @@ function MateriaDetalle({
                   Requiere {LAB_100_LABEL} de asistencia, recuperable hasta 30% por etapa (Art.
                   11°).
                 </p>
-                <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="mb-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
                   <LabInput
                     label="Total"
                     value={materia.practicasLab.total}
@@ -673,7 +673,7 @@ function MateriaDetalle({
           )}
 
           <Reveal>
-            <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
               <div className="mb-3 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <p className="text-sm font-semibold text-foreground">Simulador</p>
@@ -728,7 +728,7 @@ function MateriaDetalle({
                 Registro de clases ({stats.totalClases})
               </h3>
             </div>
-            <div className="max-h-[600px] space-y-1.5 overflow-y-auto rounded-2xl border border-border bg-card p-3">
+            <div className="max-h-[600px] space-y-1.5 overflow-y-auto rounded-2xl border border-border bg-card p-2 sm:p-3">
               {stats.fechas.map((fecha) => (
                 <ClaseRow
                   key={fecha}
@@ -821,7 +821,7 @@ function ClaseRow({
 
   return (
     <div
-      className={`flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-xs ${
+      className={`flex flex-wrap items-start gap-2 rounded-xl border px-2.5 py-2 text-xs sm:items-center sm:px-3 ${
         esHoy
           ? "border-primary/40 bg-primary/5"
           : !estado && esPasada
@@ -829,7 +829,7 @@ function ClaseRow({
             : "border-border bg-background"
       }`}
     >
-      <span className="w-24 flex-shrink-0 capitalize text-foreground">{fmtFecha(fecha)}</span>
+      <span className="shrink-0 capitalize text-foreground sm:w-24">{fmtFecha(fecha)}</span>
       {esHoy && (
         <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
           Hoy
@@ -838,7 +838,7 @@ function ClaseRow({
       {!estado && esPasada && !esHoy && (
         <span className="text-[10px] font-medium text-amber-500">Sin marcar</span>
       )}
-      <div className="ml-auto flex flex-wrap gap-1">
+      <div className="grid w-full grid-cols-5 gap-1 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap">
         {(Object.keys(ESTADO_META) as EstadoClase[]).map((key) => {
           const m = ESTADO_META[key];
           const activo = estado === key;

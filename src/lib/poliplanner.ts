@@ -68,8 +68,10 @@ function materiaIdEstable(materia: string, semestre: string | number, plan: stri
   return `iek-plan-${planLimpio}-${String(semestre).trim() || "sin-semestre"}-${limpio}`;
 }
 
-/** Oferta enriquecida: fuente común para planificador, exámenes y calculadoras. */
-export const DATA: Seccion[] = (RAW as Omit<Seccion, "materiaId" | "nombreNormalizado">[])
+export function normalizeScheduleData(
+  source: Omit<Seccion, "materiaId" | "nombreNormalizado">[] | Seccion[],
+): Seccion[] {
+  return source
   .filter((s) => s.materia)
   .map((s) => {
     const nombreNormalizado = normalizeAcademicName(s.materia);
@@ -81,6 +83,22 @@ export const DATA: Seccion[] = (RAW as Omit<Seccion, "materiaId" | "nombreNormal
       nombreNormalizado,
     };
   });
+}
+
+/** Oferta enriquecida y mutable en el lugar: fuente común para todas las herramientas. */
+export const DATA: Seccion[] = normalizeScheduleData(
+  RAW as Omit<Seccion, "materiaId" | "nombreNormalizado">[],
+);
+
+/** Sustituye la oferta completa sin romper las referencias importadas por otros módulos. */
+export function replaceScheduleData(source: Seccion[]): void {
+  const normalized = normalizeScheduleData(source);
+  if (!normalized.length) throw new Error("La actualización no contiene secciones válidas");
+  DATA.splice(0, DATA.length, ...normalized);
+  nombreOfertadoCache.clear();
+  seccionesPorMateriaCache.clear();
+  seccionesCursablesCache.clear();
+}
 
 export const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const;
 export type Dia = (typeof DIAS)[number];
@@ -386,8 +404,6 @@ export function docenteNombre(d: Docente): string {
 
 /* ───────────────────────── Enlace malla curricular ↔ oferta del período ───────────────────────── */
 
-const NOMBRES_OFERTADOS = [...new Set(DATA.map((s) => s.materia))];
-
 /**
  * Dado el nombre de una materia de la malla curricular completa (que puede
  * no coincidir carácter a carácter con el nombre en el Excel del período,
@@ -400,7 +416,7 @@ const nombreOfertadoCache = new Map<string, string | null>();
 export function nombreOfertadoParaMalla(nombreMalla: string): string | null {
   if (nombreOfertadoCache.has(nombreMalla)) return nombreOfertadoCache.get(nombreMalla)!;
   const resultado =
-    NOMBRES_OFERTADOS.filter((name) => academicNamesMatch(nombreMalla, name)).sort((a, b) =>
+    [...new Set(DATA.map((section) => section.materia))].filter((name) => academicNamesMatch(nombreMalla, name)).sort((a, b) =>
       a.localeCompare(b, "es"),
     )[0] || null;
   nombreOfertadoCache.set(nombreMalla, resultado);

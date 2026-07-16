@@ -28,6 +28,8 @@ import {
   type RegisteredUser,
 } from "@/lib/admin-service";
 import { publishScheduleRevision } from "@/lib/schedule-update-service";
+import { parseScheduleFile } from "@/lib/schedule-import-parser";
+import type { Seccion } from "@/lib/poliplanner";
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 type Tab =
   "dashboard" | "notices" | "calendar" | "exams" | "resources" | "schedules" | "users" | "audit";
@@ -571,36 +573,75 @@ function ScheduleUpdates({
   const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState("");
   const [sending, setSending] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [parsedSections, setParsedSections] = useState<Seccion[] | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
+
+  async function chooseFile(next: File | null) {
+    setFile(next);
+    setParsedSections(null);
+    setParseError(null);
+    if (!next) return;
+    setParsing(true);
+    try {
+      setParsedSections(await parseScheduleFile(next));
+    } catch (error) {
+      setParseError(error instanceof Error ? error.message : "No se pudo procesar el archivo.");
+    } finally {
+      setParsing(false);
+    }
+  }
+
   async function publish(event: React.FormEvent) {
     event.preventDefault();
-    if (!file) return;
+    if (!file || !parsedSections) return;
     setSending(true);
     await perform(async () => {
       try {
-        await publishScheduleRevision(file, summary);
+        await publishScheduleRevision(file, summary, parsedSections);
         setFile(null);
+        setParsedSections(null);
         setSummary("");
         await reload();
       } finally {
         setSending(false);
       }
-    }, "Archivo de horarios publicado y revisión registrada.");
+    }, `${parsedSections.length} secciones publicadas. Planificador, ¿Dónde rindo?, asistencia, promedio y exámenes usarán esta versión.`);
   }
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
       <form onSubmit={publish} className="glass h-fit rounded-2xl p-5">
         <h2 className="font-semibold">Publicar nueva versión</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Subí el Excel o CSV y explicá qué cambió. Al sincronizar, los estudiantes recibirán un
-          aviso para revisar sus fechas y secciones.
+          Subí el Excel o CSV y verificá la cantidad de secciones detectadas. La publicación
+          sustituye la fuente central que utilizan las herramientas académicas.
         </p>
         <input
           required
           type="file"
-          accept=".xlsx,.xls,.csv"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          accept=".xlsx,.csv"
+          onChange={(e) => void chooseFile(e.target.files?.[0] || null)}
           className="mt-4 block w-full text-sm"
         />
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          Columnas mínimas: <b>Materia</b> y <b>Sección</b>. Para actualizar todas las vistas incluí
+          Turno, Plan, Semestre, Departamento, días de clase, horarios, aulas y fechas de examen.
+        </p>
+        {parsing && (
+          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Verificando columnas y secciones…
+          </p>
+        )}
+        {parsedSections && (
+          <p className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300">
+            Archivo válido: <b>{parsedSections.length} secciones</b> listas para publicar.
+          </p>
+        )}
+        {parseError && (
+          <p className="mt-3 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-xs text-red-700 dark:text-red-300">
+            {parseError}
+          </p>
+        )}
         <textarea
           required
           value={summary}
@@ -610,10 +651,10 @@ function ScheduleUpdates({
           className="mt-3 w-full rounded-xl border border-input bg-background p-3"
         />
         <button
-          disabled={sending}
+          disabled={sending || parsing || !parsedSections}
           className="mt-3 w-full rounded-xl bg-primary p-3 text-primary-foreground disabled:opacity-50"
         >
-          {sending ? "Publicando…" : "Publicar actualización"}
+          {sending ? "Publicando…" : "Publicar y actualizar herramientas"}
         </button>
       </form>
       <div className="space-y-3">
@@ -628,6 +669,7 @@ function ScheduleUpdates({
             <p className="mt-2 text-sm text-muted-foreground">{String(row.change_summary)}</p>
             <p className="mt-2 text-xs text-muted-foreground/70">
               Archivo: {String(row.file_name)}
+              {Number(row.section_count) > 0 ? ` · ${Number(row.section_count)} secciones` : ""}
             </p>
           </article>
         ))}

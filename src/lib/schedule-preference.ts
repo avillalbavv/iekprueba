@@ -11,6 +11,14 @@ export function shiftDistance(turno: string, preferredShift?: AcademicShift): nu
   return Math.abs(SHIFT_POSITION[turno as AcademicShift] - SHIFT_POSITION[preferredShift]);
 }
 
+export function shiftDistanceToPreferences(
+  turno: string,
+  preferredShifts?: AcademicShift[],
+): number {
+  if (!preferredShifts?.length) return 0;
+  return Math.min(...preferredShifts.map((preferred) => shiftDistance(turno, preferred)));
+}
+
 /**
  * Devuelve las secciones del turno más cercano al solicitado: noche cae a
  * tarde antes que mañana, y mañana cae a tarde antes que noche.
