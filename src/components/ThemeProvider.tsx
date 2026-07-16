@@ -21,7 +21,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       const saved = localStorage.getItem("iek-theme") as Theme | null;
       if (saved === "light" || saved === "dark") return saved;
-    } catch { /* SSR guard */ }
+    } catch {
+      /* SSR guard */
+    }
     if (typeof window !== "undefined") {
       return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
     }
@@ -32,18 +34,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-    try { localStorage.setItem("iek-theme", theme); } catch { /* ignore */ }
+    try {
+      localStorage.setItem("iek-theme", theme);
+    } catch {
+      /* ignore */
+    }
   }, [theme]);
 
   const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
-  return (
-    <ThemeContext.Provider value={{ theme, toggle }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
 }
 
+// El hook comparte el mismo contexto privado que el proveedor.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
 }

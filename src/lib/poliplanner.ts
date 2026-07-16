@@ -72,17 +72,17 @@ export function normalizeScheduleData(
   source: Omit<Seccion, "materiaId" | "nombreNormalizado">[] | Seccion[],
 ): Seccion[] {
   return source
-  .filter((s) => s.materia)
-  .map((s) => {
-    const nombreNormalizado = normalizeAcademicName(s.materia);
-    const semGrupo = SEMESTRES_CORREGIDOS[nombreNormalizado] ?? s.semGrupo;
-    return {
-      ...s,
-      semGrupo,
-      materiaId: materiaIdEstable(s.materia, semGrupo, s.plan),
-      nombreNormalizado,
-    };
-  });
+    .filter((s) => s.materia)
+    .map((s) => {
+      const nombreNormalizado = normalizeAcademicName(s.materia);
+      const semGrupo = SEMESTRES_CORREGIDOS[nombreNormalizado] ?? s.semGrupo;
+      return {
+        ...s,
+        semGrupo,
+        materiaId: materiaIdEstable(s.materia, semGrupo, s.plan),
+        nombreNormalizado,
+      };
+    });
 }
 
 /** Oferta enriquecida y mutable en el lugar: fuente común para todas las herramientas. */
@@ -416,9 +416,9 @@ const nombreOfertadoCache = new Map<string, string | null>();
 export function nombreOfertadoParaMalla(nombreMalla: string): string | null {
   if (nombreOfertadoCache.has(nombreMalla)) return nombreOfertadoCache.get(nombreMalla)!;
   const resultado =
-    [...new Set(DATA.map((section) => section.materia))].filter((name) => academicNamesMatch(nombreMalla, name)).sort((a, b) =>
-      a.localeCompare(b, "es"),
-    )[0] || null;
+    [...new Set(DATA.map((section) => section.materia))]
+      .filter((name) => academicNamesMatch(nombreMalla, name))
+      .sort((a, b) => a.localeCompare(b, "es"))[0] || null;
   nombreOfertadoCache.set(nombreMalla, resultado);
   return resultado;
 }

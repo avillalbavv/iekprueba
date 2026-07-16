@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, Check, X } from "lucide-react";
-import { loadNotifications, markAllNotificationsRead, markNotificationRead } from "@/lib/notification-service";
+import {
+  loadNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/lib/notification-service";
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(() => loadNotifications());
@@ -60,13 +64,20 @@ export function NotificationBell() {
             <h2 className="font-semibold">Notificaciones</h2>
             <div className="flex items-center gap-1">
               {unread > 0 && (
-                <button type="button" onClick={readAll}
-                  className="rounded-md px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10">
+                <button
+                  type="button"
+                  onClick={readAll}
+                  className="rounded-md px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
+                >
                   Marcar todas leídas
                 </button>
               )}
-              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar notificaciones"
-                className="rounded-md p-1 text-muted-foreground hover:bg-foreground/10 hover:text-foreground">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Cerrar notificaciones"
+                className="rounded-md p-1 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>

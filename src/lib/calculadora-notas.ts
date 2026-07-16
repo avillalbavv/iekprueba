@@ -25,7 +25,10 @@ export function roundFinalAcademicResult(value: number): number {
   return corrected - floor >= 0.5 ? Math.ceil(corrected) : floor;
 }
 
-export function calculateStageScore(partial: number, activities: WeightedActivity[]): number | null {
+export function calculateStageScore(
+  partial: number,
+  activities: WeightedActivity[],
+): number | null {
   if (activities.length === 0) return clampAcademic(partial);
   const weight = activities.reduce((sum, activity) => sum + activity.porcentaje, 0);
   if (Math.abs(weight - 100) > 1e-8) return null;
@@ -69,7 +72,14 @@ export function getRequiredFinalExamScore(
   targetGrade: number,
   step = FINAL_EXAM_INPUT_STEP,
 ): number | null {
-  if (!Number.isFinite(pep) || !Number.isFinite(step) || step <= 0 || targetGrade < 2 || targetGrade > 5) return null;
+  if (
+    !Number.isFinite(pep) ||
+    !Number.isFinite(step) ||
+    step <= 0 ||
+    targetGrade < 2 ||
+    targetGrade > 5
+  )
+    return null;
   const firstUnit = Math.ceil(FINAL_EXAM_MINIMUM / step - 1e-10);
   const lastUnit = Math.floor(100 / step + 1e-10);
   for (let unit = firstUnit; unit <= lastUnit; unit++) {

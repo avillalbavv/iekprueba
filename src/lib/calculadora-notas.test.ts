@@ -50,10 +50,13 @@ test("conserva precisión en PPEP, PEP y RP intermedios", () => {
 test("rechaza actividades incompletas y acepta cero", () => {
   assert.equal(calculateStageScore(0, []), 0);
   assert.equal(calculateStageScore(50, [{ nota: 100, porcentaje: 99.9 }]), null);
-  assert.equal(calculateStageScore(50, [
-    { nota: 60, porcentaje: 50 },
-    { nota: 80, porcentaje: 50 },
-  ]), 60);
+  assert.equal(
+    calculateStageScore(50, [
+      { nota: 60, porcentaje: 50 },
+      { nota: 80, porcentaje: 50 },
+    ]),
+    60,
+  );
 });
 
 test("resuelve la regresión PEP 85,63 y examen final 73", () => {
@@ -75,7 +78,8 @@ test("el cálculo inverso usa el mismo motor que el cálculo directo", () => {
         continue;
       }
       assert.ok(getFinalGrade(required, pep) >= target);
-      if (required > 50) assert.ok(getFinalGrade(Number((required - 0.1).toFixed(1)), pep) < target);
+      if (required > 50)
+        assert.ok(getFinalGrade(Number((required - 0.1).toFixed(1)), pep) < target);
     }
   }
 });

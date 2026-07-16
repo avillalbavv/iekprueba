@@ -46,11 +46,13 @@ export function Reveal({
     // Red de seguridad: si por lo que sea el observer no dispara enseguida,
     // no dejamos el contenido semi-invisible más que un instante.
     const fallback = window.setTimeout(() => setVisible(true), 700);
-    return () => { io.disconnect(); window.clearTimeout(fallback); };
+    return () => {
+      io.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, [threshold]);
 
-  const base =
-    variant === "zoom" ? "reveal-zoom" : variant === "stagger" ? "stagger" : "reveal";
+  const base = variant === "zoom" ? "reveal-zoom" : variant === "stagger" ? "stagger" : "reveal";
 
   return (
     <Tag

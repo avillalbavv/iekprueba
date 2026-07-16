@@ -5,10 +5,25 @@
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Users, Target, CheckSquare, MessageSquare, Instagram, Mail,
-  Megaphone, Lightbulb, CalendarDays, BookOpen, Network,
-  ShieldCheck, ChevronRight, ArrowRight, UserCircle2, Star, Wrench,
-  Facebook, Youtube,
+  Users,
+  Target,
+  CheckSquare,
+  MessageSquare,
+  Instagram,
+  Mail,
+  Megaphone,
+  Lightbulb,
+  CalendarDays,
+  BookOpen,
+  Network,
+  ShieldCheck,
+  ChevronRight,
+  ArrowRight,
+  UserCircle2,
+  Star,
+  Wrench,
+  Facebook,
+  Youtube,
 } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
@@ -22,7 +37,8 @@ export const Route = createFileRoute("/delegacion")({ component: DelegacionPage 
 const DELEGADO_GENERAL = {
   nombre: "Univ. Matías Benítez",
   rol: "Delegado",
-  descripcion: "Representante principal de los estudiantes de Ingeniería en Electrónica ante las autoridades de la Facultad Politécnica — UNA.",
+  descripcion:
+    "Representante principal de los estudiantes de Ingeniería en Electrónica ante las autoridades de la Facultad Politécnica — UNA.",
   instagram: "https://www.instagram.com/iek_fpuna/",
 };
 
@@ -48,14 +64,46 @@ const WORKGROUP: { nombre: string; rol: "Miembro de Delegación" }[] = [
 ];
 
 const FUNCIONES = [
-  { icon: MessageSquare, title: "Comunicación", desc: "Canal de comunicación entre los estudiantes y la institución, difundiendo avisos y novedades." },
-  { icon: Megaphone,     title: "Representación", desc: "Representamos los intereses de los estudiantes de IEK ante las autoridades académicas." },
-  { icon: Lightbulb,     title: "Talleres y charlas", desc: "Organizamos actividades de formación complementaria, charlas técnicas y talleres prácticos." },
-  { icon: CalendarDays,  title: "Eventos", desc: "Coordinamos jornadas de integración, actividades culturales y eventos estudiantiles." },
-  { icon: BookOpen,      title: "Apoyo académico", desc: "Facilitamos recursos, información sobre la malla curricular y acompañamiento durante la carrera." },
-  { icon: Network,       title: "Comunidad", desc: "Fortalecemos los vínculos entre estudiantes de distintos semestres y énfasis." },
-  { icon: ShieldCheck,   title: "Transparencia", desc: "Actuamos con responsabilidad, transparencia y compromiso hacia la comunidad IEK." },
-  { icon: Users,         title: "Integración", desc: "Promovemos la participación activa e integración de todos los estudiantes." },
+  {
+    icon: MessageSquare,
+    title: "Comunicación",
+    desc: "Canal de comunicación entre los estudiantes y la institución, difundiendo avisos y novedades.",
+  },
+  {
+    icon: Megaphone,
+    title: "Representación",
+    desc: "Representamos los intereses de los estudiantes de IEK ante las autoridades académicas.",
+  },
+  {
+    icon: Lightbulb,
+    title: "Talleres y charlas",
+    desc: "Organizamos actividades de formación complementaria, charlas técnicas y talleres prácticos.",
+  },
+  {
+    icon: CalendarDays,
+    title: "Eventos",
+    desc: "Coordinamos jornadas de integración, actividades culturales y eventos estudiantiles.",
+  },
+  {
+    icon: BookOpen,
+    title: "Apoyo académico",
+    desc: "Facilitamos recursos, información sobre la malla curricular y acompañamiento durante la carrera.",
+  },
+  {
+    icon: Network,
+    title: "Comunidad",
+    desc: "Fortalecemos los vínculos entre estudiantes de distintos semestres y énfasis.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Transparencia",
+    desc: "Actuamos con responsabilidad, transparencia y compromiso hacia la comunidad IEK.",
+  },
+  {
+    icon: Users,
+    title: "Integración",
+    desc: "Promovemos la participación activa e integración de todos los estudiantes.",
+  },
 ];
 
 function DelegacionPage() {
@@ -69,7 +117,9 @@ function DelegacionPage() {
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
+                <Link to="/" className="hover:text-foreground transition-colors">
+                  Inicio
+                </Link>
                 <ChevronRight className="h-3 w-3" />
                 <span className="text-foreground">Delegación</span>
               </div>
@@ -78,11 +128,12 @@ function DelegacionPage() {
                 Representación Estudiantil
               </span>
               <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">
-                Delegación <br /><span className="text-gradient">Estudiantil IEK</span>
+                Delegación <br />
+                <span className="text-gradient">Estudiantil IEK</span>
               </h1>
               <p className="mt-5 text-base text-muted-foreground sm:text-lg max-w-2xl leading-relaxed">
-                Somos el espacio de representación, comunicación y acompañamiento de los
-                estudiantes de Ingeniería en Electrónica de la FPUNA.
+                Somos el espacio de representación, comunicación y acompañamiento de los estudiantes
+                de Ingeniería en Electrónica de la FPUNA.
               </p>
             </Reveal>
           </div>
@@ -96,13 +147,13 @@ function DelegacionPage() {
                 <Target className="h-6 w-6 text-primary mb-4" />
                 <h2 className="font-display text-2xl font-bold mb-4">Nuestra misión</h2>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  La Delegación Estudiantil IEK busca ser un puente real entre los estudiantes
-                  de la carrera y la institución, fomentando la participación activa,
-                  la comunicación fluida y el fortalecimiento de la comunidad estudiantil.
+                  La Delegación Estudiantil IEK busca ser un puente real entre los estudiantes de la
+                  carrera y la institución, fomentando la participación activa, la comunicación
+                  fluida y el fortalecimiento de la comunidad estudiantil.
                 </p>
                 <p className="text-muted-foreground leading-relaxed">
-                  Queremos que cada estudiante de IEK se sienta acompañado, informado y
-                  representado durante toda su trayectoria académica.
+                  Queremos que cada estudiante de IEK se sienta acompañado, informado y representado
+                  durante toda su trayectoria académica.
                 </p>
               </div>
               <div className="glass-strong card-hover rounded-2xl p-8">
@@ -193,16 +244,21 @@ function DelegacionPage() {
             <Reveal variant="stagger" className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {WORKGROUP.map((miembro) => {
                 return (
-                  <div key={miembro.nombre} className="glass card-hover group rounded-2xl p-6 text-center">
+                  <div
+                    key={miembro.nombre}
+                    className="glass card-hover group rounded-2xl p-6 text-center"
+                  >
                     {/* Avatar placeholder */}
-                    <div
-                      className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full border-2 border-primary/25 bg-primary/10 ring-2 ring-primary/30 ring-offset-2 ring-offset-transparent transition-transform duration-300 group-hover:scale-105"
-                    >
+                    <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full border-2 border-primary/25 bg-primary/10 ring-2 ring-primary/30 ring-offset-2 ring-offset-transparent transition-transform duration-300 group-hover:scale-105">
                       <UserCircle2 className="h-10 w-10 text-primary/60" />
                     </div>
                     <span
                       className="inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider mb-2"
-                      style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.25)" }}
+                      style={{
+                        background: "rgba(59,130,246,0.1)",
+                        color: "#3b82f6",
+                        border: "1px solid rgba(59,130,246,0.25)",
+                      }}
                     >
                       {miembro.rol}
                     </span>
@@ -245,29 +301,48 @@ function DelegacionPage() {
                 <div className="float-slow absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
                 <div className="relative grid gap-8 lg:grid-cols-2 items-center">
                   <div>
-                    <h2 className="text-3xl font-bold sm:text-4xl mb-4">Contactá a la Delegación</h2>
+                    <h2 className="text-3xl font-bold sm:text-4xl mb-4">
+                      Contactá a la Delegación
+                    </h2>
                     <p className="text-muted-foreground leading-relaxed mb-6">
-                      ¿Tenés una consulta, propuesta o querés sumarte? Escribinos por redes o mediante el formulario.
+                      ¿Tenés una consulta, propuesta o querés sumarte? Escribinos por redes o
+                      mediante el formulario.
                     </p>
                     <div className="flex flex-wrap gap-3">
-                      <a href="https://www.instagram.com/iek_fpuna/" target="_blank" rel="noopener noreferrer"
-                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10">
+                      <a
+                        href="https://www.instagram.com/iek_fpuna/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10"
+                      >
                         <Instagram className="h-4 w-4 text-pink-400" /> @iek_fpuna
                       </a>
-                      <a href="https://www.facebook.com/DelegacionIEK" target="_blank" rel="noopener noreferrer"
-                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10">
+                      <a
+                        href="https://www.facebook.com/DelegacionIEK"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10"
+                      >
                         <Facebook className="h-4 w-4 text-blue-500" /> Facebook
                       </a>
-                      <a href="https://www.youtube.com/channel/UCoJV8IlpUXYba0VhD1oL8FQ" target="_blank" rel="noopener noreferrer"
-                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10">
+                      <a
+                        href="https://www.youtube.com/channel/UCoJV8IlpUXYba0VhD1oL8FQ"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10"
+                      >
                         <Youtube className="h-4 w-4 text-red-500" /> YouTube
                       </a>
-                      <a href="mailto:delegacioniek@gmail.com"
-                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10">
+                      <a
+                        href="mailto:delegacioniek@gmail.com"
+                        className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-foreground/10"
+                      >
                         <Mail className="h-4 w-4 text-primary" /> Correo
                       </a>
-                      <Link to="/contacto"
-                        className="btn-premium inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground">
+                      <Link
+                        to="/contacto"
+                        className="btn-premium inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+                      >
                         Formulario <ArrowRight className="h-4 w-4" />
                       </Link>
                     </div>
@@ -275,8 +350,8 @@ function DelegacionPage() {
                   <div className="glass rounded-2xl p-6">
                     <h3 className="font-display font-semibold text-lg mb-3">Participá</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      La Delegación está abierta a todos los estudiantes de IEK.
-                      Si tenés ideas o querés sumarte al equipo, no dudes en contactarnos.
+                      La Delegación está abierta a todos los estudiantes de IEK. Si tenés ideas o
+                      querés sumarte al equipo, no dudes en contactarnos.
                     </p>
                   </div>
                 </div>

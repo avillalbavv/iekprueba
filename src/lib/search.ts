@@ -6,8 +6,16 @@
  */
 
 const ROMAN_TO_ARABIC: Record<string, string> = {
-  i: "1", ii: "2", iii: "3", iv: "4", v: "5",
-  vi: "6", vii: "7", viii: "8", ix: "9", x: "10",
+  i: "1",
+  ii: "2",
+  iii: "3",
+  iv: "4",
+  v: "5",
+  vi: "6",
+  vii: "7",
+  viii: "8",
+  ix: "9",
+  x: "10",
 };
 const ARABIC_TO_ROMAN: Record<string, string> = Object.fromEntries(
   Object.entries(ROMAN_TO_ARABIC).map(([roman, num]) => [num, roman]),
@@ -16,7 +24,8 @@ const ARABIC_TO_ROMAN: Record<string, string> = Object.fromEntries(
 /** Quita tildes/diacríticos, pasa a minúsculas y colapsa espacios/puntuación. */
 export function normalizeBasic(s: string): string {
   return s
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
@@ -42,8 +51,10 @@ export function searchVariants(s: string): string[] {
   const tokens = base.split(" ");
   const last = tokens[tokens.length - 1];
   const variants = new Set([base]);
-  if (last in ROMAN_TO_ARABIC) variants.add([...tokens.slice(0, -1), ROMAN_TO_ARABIC[last]].join(" "));
-  if (last in ARABIC_TO_ROMAN) variants.add([...tokens.slice(0, -1), ARABIC_TO_ROMAN[last]].join(" "));
+  if (last in ROMAN_TO_ARABIC)
+    variants.add([...tokens.slice(0, -1), ROMAN_TO_ARABIC[last]].join(" "));
+  if (last in ARABIC_TO_ROMAN)
+    variants.add([...tokens.slice(0, -1), ARABIC_TO_ROMAN[last]].join(" "));
   return [...variants];
 }
 

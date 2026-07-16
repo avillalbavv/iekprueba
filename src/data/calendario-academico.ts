@@ -18,46 +18,52 @@ export interface EventoFecha {
   id: string;
   categoria: CategoriaCalendario;
   titulo: string;
-  fecha: string;   // ISO (para ordenar)
+  fecha: string; // ISO (para ordenar)
   fechaLabel: string; // texto a mostrar
   detalle?: string;
 }
 
 function fmt(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("es-PY", { day: "2-digit", month: "long", year: "numeric" });
+  return new Date(iso + "T00:00:00").toLocaleDateString("es-PY", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 /** Eventos con fecha concreta, para la línea de tiempo. */
-export const EVENTOS_CON_FECHA: EventoFecha[] = ([
-  {
-    id: "reunion-profesores",
-    categoria: "docente",
-    titulo: "Reunión General de Profesores",
-    fecha: "2026-07-29",
-    fechaLabel: fmt("2026-07-29"),
-  },
-  {
-    id: "periodo-clases-inicio",
-    categoria: "clases",
-    titulo: "Inicio del período de clases",
-    fecha: SEMESTRE_INICIO,
-    fechaLabel: fmt(SEMESTRE_INICIO),
-  },
-  {
-    id: "periodo-clases-fin",
-    categoria: "clases",
-    titulo: "Fin del período de clases",
-    fecha: SEMESTRE_FIN,
-    fechaLabel: fmt(SEMESTRE_FIN),
-  },
-  ...FERIADOS.map((f, i) => ({
-    id: `feriado-${i}`,
-    categoria: "feriado" as const,
-    titulo: f.label,
-    fecha: f.fecha,
-    fechaLabel: fmt(f.fecha),
-  })),
-] satisfies EventoFecha[]).sort((a, b) => a.fecha.localeCompare(b.fecha));
+export const EVENTOS_CON_FECHA: EventoFecha[] = (
+  [
+    {
+      id: "reunion-profesores",
+      categoria: "docente",
+      titulo: "Reunión General de Profesores",
+      fecha: "2026-07-29",
+      fechaLabel: fmt("2026-07-29"),
+    },
+    {
+      id: "periodo-clases-inicio",
+      categoria: "clases",
+      titulo: "Inicio del período de clases",
+      fecha: SEMESTRE_INICIO,
+      fechaLabel: fmt(SEMESTRE_INICIO),
+    },
+    {
+      id: "periodo-clases-fin",
+      categoria: "clases",
+      titulo: "Fin del período de clases",
+      fecha: SEMESTRE_FIN,
+      fechaLabel: fmt(SEMESTRE_FIN),
+    },
+    ...FERIADOS.map((f, i) => ({
+      id: `feriado-${i}`,
+      categoria: "feriado" as const,
+      titulo: f.label,
+      fecha: f.fecha,
+      fechaLabel: fmt(f.fecha),
+    })),
+  ] satisfies EventoFecha[]
+).sort((a, b) => a.fecha.localeCompare(b.fecha));
 
 export interface PeriodoAcademico {
   id: string;
@@ -75,22 +81,74 @@ export function estadoPeriodo(periodo: PeriodoAcademico, hoy = new Date()): Esta
 
 export function fechaPeriodoLabel(periodo: PeriodoAcademico): string {
   const inicio = fmt(periodo.inicio);
-  return periodo.fin && periodo.fin !== periodo.inicio ? `${inicio} al ${fmt(periodo.fin)}` : inicio;
+  return periodo.fin && periodo.fin !== periodo.inicio
+    ? `${inicio} al ${fmt(periodo.fin)}`
+    : inicio;
 }
 
 /** Fuente única de plazos del segundo periodo académico 2026. */
 export const TRAMITES: PeriodoAcademico[] = [
-  { id: "admision-traslado", titulo: "Solicitud de admisión directa y traslado", inicio: "2026-06-29", fin: "2026-07-17" },
+  {
+    id: "admision-traslado",
+    titulo: "Solicitud de admisión directa y traslado",
+    inicio: "2026-06-29",
+    fin: "2026-07-17",
+  },
   { id: "gratuidad", titulo: "Solicitud de gratuidad", inicio: "2026-06-29", fin: "2026-07-17" },
-  { id: "exoneraciones", titulo: "Solicitud de exoneraciones", inicio: "2026-06-29", fin: "2026-07-17" },
-  { id: "fraccionamiento-deuda", titulo: "Fraccionamiento de deuda", inicio: "2026-07-20", fin: "2026-07-29" },
-  { id: "homologacion", titulo: "Solicitud de homologación", inicio: "2026-06-29", fin: "2026-07-17" },
-  { id: "prorroga-readmision", titulo: "Solicitud de prórroga en tiempo de permanencia, extensión de prórroga y readmisión", inicio: "2026-06-29", fin: "2026-07-17" },
-  { id: "inscripcion-especial", titulo: "Solicitud de inscripción especial e inscripción con dispensa de requisito", inicio: "2026-06-29", fin: "2026-07-17" },
-  { id: "anulacion-inscripcion", titulo: "Anulación de inscripción", inicio: "2026-08-11", fin: "2026-08-28" },
-  { id: "renuncia-examen-final", titulo: "Renuncia a derecho de examen final", inicio: "2026-07-21", fin: "2026-07-29" },
-  { id: "inscripcion-ordinaria", titulo: "Inscripción ordinaria (vía web)", inicio: "2026-07-28", fin: "2026-07-30" },
-  { id: "inscripcion-tardia", titulo: "Inscripción tardía para asignaturas con cupos disponibles (vía Secretaría Académica)", inicio: "2026-08-03", fin: "2026-08-06" },
+  {
+    id: "exoneraciones",
+    titulo: "Solicitud de exoneraciones",
+    inicio: "2026-06-29",
+    fin: "2026-07-17",
+  },
+  {
+    id: "fraccionamiento-deuda",
+    titulo: "Fraccionamiento de deuda",
+    inicio: "2026-07-20",
+    fin: "2026-07-29",
+  },
+  {
+    id: "homologacion",
+    titulo: "Solicitud de homologación",
+    inicio: "2026-06-29",
+    fin: "2026-07-17",
+  },
+  {
+    id: "prorroga-readmision",
+    titulo: "Solicitud de prórroga en tiempo de permanencia, extensión de prórroga y readmisión",
+    inicio: "2026-06-29",
+    fin: "2026-07-17",
+  },
+  {
+    id: "inscripcion-especial",
+    titulo: "Solicitud de inscripción especial e inscripción con dispensa de requisito",
+    inicio: "2026-06-29",
+    fin: "2026-07-17",
+  },
+  {
+    id: "anulacion-inscripcion",
+    titulo: "Anulación de inscripción",
+    inicio: "2026-08-11",
+    fin: "2026-08-28",
+  },
+  {
+    id: "renuncia-examen-final",
+    titulo: "Renuncia a derecho de examen final",
+    inicio: "2026-07-21",
+    fin: "2026-07-29",
+  },
+  {
+    id: "inscripcion-ordinaria",
+    titulo: "Inscripción ordinaria (vía web)",
+    inicio: "2026-07-28",
+    fin: "2026-07-30",
+  },
+  {
+    id: "inscripcion-tardia",
+    titulo: "Inscripción tardía para asignaturas con cupos disponibles (vía Secretaría Académica)",
+    inicio: "2026-08-03",
+    fin: "2026-08-06",
+  },
 ];
 
 export const PERIODOS_EVALUACION: PeriodoAcademico[] = [

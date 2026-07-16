@@ -3,8 +3,19 @@
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  HeartPulse, Settings2, Bot, Radio, GraduationCap, Briefcase,
-  Target, ChevronRight, ExternalLink, BookOpen, Map, Zap, Users,
+  HeartPulse,
+  Settings2,
+  Bot,
+  Radio,
+  GraduationCap,
+  Briefcase,
+  Target,
+  ChevronRight,
+  ExternalLink,
+  BookOpen,
+  Map,
+  Zap,
+  Users,
 } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
@@ -14,28 +25,60 @@ export const Route = createFileRoute("/carrera")({ component: CarreraPage });
 
 const ENFASIS = [
   {
-    icon: Settings2, id: "control-industrial", color: "#3b82f6",
+    icon: Settings2,
+    id: "control-industrial",
+    color: "#3b82f6",
     title: "Control Industrial",
     desc: "Formación orientada a la automatización de procesos, sistemas de control, PLC, sensores, actuadores e instrumentación industrial. Ideal para trabajar en plantas de producción, fábricas y entornos industriales.",
-    materias: ["Automatización Industrial", "Controladores Programables", "Instrumentación y Control", "Neumática e Hidráulica", "Sistemas de Potencia"],
+    materias: [
+      "Automatización Industrial",
+      "Controladores Programables",
+      "Instrumentación y Control",
+      "Neumática e Hidráulica",
+      "Sistemas de Potencia",
+    ],
   },
   {
-    icon: HeartPulse, id: "electronica-medica", color: "#2dd4bf",
+    icon: HeartPulse,
+    id: "electronica-medica",
+    color: "#2dd4bf",
     title: "Electrónica Médica",
     desc: "Diseño y mantenimiento de equipamiento biomédico, instrumentación médica y sistemas de diagnóstico. Orientado al sector salud, hospitales y empresas de tecnología médica.",
-    materias: ["Electrónica Médica I, II y III", "Diagnóstico por Imágenes", "Bioseguridad", "Organización Hospitalaria", "Química Clínica"],
+    materias: [
+      "Electrónica Médica I, II y III",
+      "Diagnóstico por Imágenes",
+      "Bioseguridad",
+      "Organización Hospitalaria",
+      "Química Clínica",
+    ],
   },
   {
-    icon: Bot, id: "mecatronica", color: "#a78bfa",
+    icon: Bot,
+    id: "mecatronica",
+    color: "#a78bfa",
     title: "Mecatrónica",
     desc: "Integración de mecánica, electrónica, control y programación para el desarrollo de sistemas inteligentes, robótica y manufactura avanzada.",
-    materias: ["Robótica", "Control Automático", "Manufactura con CNC", "Inteligencia Artificial", "Sistemas Mecatrónicos"],
+    materias: [
+      "Robótica",
+      "Control Automático",
+      "Manufactura con CNC",
+      "Inteligencia Artificial",
+      "Sistemas Mecatrónicos",
+    ],
   },
   {
-    icon: Radio, id: "teleprocesamiento", color: "#fb923c",
+    icon: Radio,
+    id: "teleprocesamiento",
+    color: "#fb923c",
     title: "Teleprocesamiento de Información",
     desc: "Telecomunicaciones, redes de datos, transmisión de señales, modulación y sistemas de comunicación. Clave para el sector de internet, telefonía y conectividad.",
-    materias: ["Modulación I y II", "Redes de Datos", "Microondas", "Comunicación Satelital", "Protocolos de Comunicación"],
+    materias: [
+      "Modulación I y II",
+      "Redes de Datos",
+      "Microondas",
+      "Comunicación Satelital",
+      "Protocolos de Comunicación",
+    ],
   },
 ];
 
@@ -51,12 +94,36 @@ const PERFIL_EGRESADO = [
 ];
 
 const CAMPOS_LABORALES = [
-  { icon: Settings2, area: "Industria y automatización", desc: "Plantas de producción, fábricas, refinadoras, empresas de manufactura." },
-  { icon: Radio, area: "Telecomunicaciones", desc: "Empresas de telefonía, internet, satélites, redes de datos y fibra óptica." },
-  { icon: HeartPulse, area: "Sector salud", desc: "Hospitales, clínicas, empresas de equipamiento médico e instituciones de salud pública." },
-  { icon: Bot, area: "Robótica e I+D", desc: "Centros de investigación, universidades, empresas de tecnología avanzada." },
-  { icon: GraduationCap, area: "Educación e investigación", desc: "Docencia universitaria, investigación aplicada, publicaciones académicas." },
-  { icon: Briefcase, area: "Emprendimiento", desc: "Creación de empresas tecnológicas, consultoría, freelance, startups." },
+  {
+    icon: Settings2,
+    area: "Industria y automatización",
+    desc: "Plantas de producción, fábricas, refinadoras, empresas de manufactura.",
+  },
+  {
+    icon: Radio,
+    area: "Telecomunicaciones",
+    desc: "Empresas de telefonía, internet, satélites, redes de datos y fibra óptica.",
+  },
+  {
+    icon: HeartPulse,
+    area: "Sector salud",
+    desc: "Hospitales, clínicas, empresas de equipamiento médico e instituciones de salud pública.",
+  },
+  {
+    icon: Bot,
+    area: "Robótica e I+D",
+    desc: "Centros de investigación, universidades, empresas de tecnología avanzada.",
+  },
+  {
+    icon: GraduationCap,
+    area: "Educación e investigación",
+    desc: "Docencia universitaria, investigación aplicada, publicaciones académicas.",
+  },
+  {
+    icon: Briefcase,
+    area: "Emprendimiento",
+    desc: "Creación de empresas tecnológicas, consultoría, freelance, startups.",
+  },
 ];
 
 function CarreraPage() {
@@ -70,7 +137,9 @@ function CarreraPage() {
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
+                <Link to="/" className="hover:text-foreground transition-colors">
+                  Inicio
+                </Link>
                 <ChevronRight className="h-3 w-3" />
                 <span className="text-foreground">La Carrera</span>
               </div>
@@ -79,26 +148,37 @@ function CarreraPage() {
                 Facultad Politécnica · UNA
               </span>
               <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">
-                Ingeniería en <br /><span className="text-gradient">Electrónica</span>
+                Ingeniería en <br />
+                <span className="text-gradient">Electrónica</span>
               </h1>
               <p className="mt-5 text-base text-muted-foreground sm:text-lg max-w-2xl leading-relaxed">
-                Una carrera de 10 semestres que forma ingenieros capaces de diseñar, analizar e implementar
-                sistemas electrónicos modernos en áreas como automatización, telecomunicaciones,
-                electrónica médica y mecatrónica.
+                Una carrera de 10 semestres que forma ingenieros capaces de diseñar, analizar e
+                implementar sistemas electrónicos modernos en áreas como automatización,
+                telecomunicaciones, electrónica médica y mecatrónica.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/mapa" className="btn-premium inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-primary/40 shadow-[0_8px_30px_-8px]">
+                <Link
+                  to="/mapa"
+                  className="btn-premium inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-primary/40 shadow-[0_8px_30px_-8px]"
+                >
                   <Map className="h-4 w-4" /> Ver mapa de materias
                 </Link>
-                <a href="https://www.pol.una.py/carreras/iek/" target="_blank" rel="noopener noreferrer"
-                  className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium hover:bg-foreground/10 text-muted-foreground">
+                <a
+                  href="https://www.pol.una.py/carreras/iek/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium hover:bg-foreground/10 text-muted-foreground"
+                >
                   <ExternalLink className="h-4 w-4" /> Sitio oficial FPUNA
                 </a>
               </div>
             </Reveal>
 
             {/* Stats */}
-            <Reveal variant="stagger" className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4 max-w-2xl">
+            <Reveal
+              variant="stagger"
+              className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4 max-w-2xl"
+            >
               {[
                 { k: "10", v: "Semestres" },
                 { k: "4", v: "Énfasis" },
@@ -120,21 +200,24 @@ function CarreraPage() {
             <Reveal variant="stagger" className="grid gap-6 lg:grid-cols-5">
               <div className="glass card-hover rounded-2xl p-8 lg:col-span-3">
                 <Zap className="h-6 w-6 text-primary mb-4" />
-                <h2 className="font-display text-2xl font-bold mb-4">¿Qué es Ingeniería en Electrónica?</h2>
+                <h2 className="font-display text-2xl font-bold mb-4">
+                  ¿Qué es Ingeniería en Electrónica?
+                </h2>
                 <p className="text-muted-foreground leading-relaxed mb-4">
                   La carrera de Ingeniería en Electrónica (IEK) de la Facultad Politécnica de la UNA
                   forma profesionales orientados al diseño, análisis, implementación y optimización
                   de sistemas electrónicos modernos.
                 </p>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  Su campo de acción abarca áreas estratégicas de la tecnología: automatización industrial,
-                  telecomunicaciones, electrónica médica, robótica, control de sistemas, electrónica digital
-                  y microprocesadores.
+                  Su campo de acción abarca áreas estratégicas de la tecnología: automatización
+                  industrial, telecomunicaciones, electrónica médica, robótica, control de sistemas,
+                  electrónica digital y microprocesadores.
                 </p>
                 <p className="text-muted-foreground leading-relaxed">
-                  Los primeros cuatro semestres constituyen el <strong className="text-foreground">Plan Básico</strong> —
-                  formación común para todos los estudiantes — seguidos por seis semestres de especialización
-                  en uno de los cuatro énfasis disponibles.
+                  Los primeros cuatro semestres constituyen el{" "}
+                  <strong className="text-foreground">Plan Básico</strong> — formación común para
+                  todos los estudiantes — seguidos por seis semestres de especialización en uno de
+                  los cuatro énfasis disponibles.
                 </p>
               </div>
               <div className="glass-strong card-hover rounded-2xl p-8 lg:col-span-2">
@@ -168,19 +251,23 @@ function CarreraPage() {
               </div>
               <h2 className="text-3xl font-bold sm:text-4xl">Énfasis disponibles</h2>
               <p className="mt-3 text-muted-foreground max-w-xl mx-auto text-sm">
-                A partir del quinto semestre, el estudiante elige uno de los cuatro énfasis
-                de especialización.
+                A partir del quinto semestre, el estudiante elige uno de los cuatro énfasis de
+                especialización.
               </p>
             </Reveal>
 
             <Reveal variant="stagger" className="grid gap-5 sm:grid-cols-2">
               {ENFASIS.map(({ icon: Icon, title, desc, color, materias }) => (
-                <article key={title}
-                  className="glass card-hover group relative overflow-hidden rounded-2xl p-7">
+                <article
+                  key={title}
+                  className="glass card-hover group relative overflow-hidden rounded-2xl p-7"
+                >
                   <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl ring-1 ring-foreground/10"
-                      style={{ background: `${color}22` }}>
+                    <div
+                      className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl ring-1 ring-foreground/10"
+                      style={{ background: `${color}22` }}
+                    >
                       <Icon className="h-6 w-6" style={{ color }} />
                     </div>
                     <div>
@@ -194,8 +281,10 @@ function CarreraPage() {
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {materias.map((m) => (
-                        <span key={m}
-                          className="rounded-lg border border-foreground/10 bg-foreground/5 px-2.5 py-1 text-xs text-muted-foreground">
+                        <span
+                          key={m}
+                          className="rounded-lg border border-foreground/10 bg-foreground/5 px-2.5 py-1 text-xs text-muted-foreground"
+                        >
                           {m}
                         </span>
                       ))}
@@ -206,8 +295,10 @@ function CarreraPage() {
             </Reveal>
 
             <Reveal className="mt-8 text-center">
-              <Link to="/mapa"
-                className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium hover:bg-foreground/10">
+              <Link
+                to="/mapa"
+                className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium hover:bg-foreground/10"
+              >
                 <Map className="h-4 w-4 text-primary" />
                 Ver mapa interactivo de materias
                 <ChevronRight className="h-4 w-4" />
@@ -228,7 +319,10 @@ function CarreraPage() {
                 El ingeniero en Electrónica egresado de la FPUNA estará en condiciones de:
               </p>
             </Reveal>
-            <Reveal variant="stagger" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
+            <Reveal
+              variant="stagger"
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto"
+            >
               {PERFIL_EGRESADO.map((item) => (
                 <div key={item} className="glass card-hover rounded-xl p-4 flex items-start gap-3">
                   <span className="mt-1.5 h-2 w-2 rounded-full bg-primary flex-shrink-0" />
@@ -250,7 +344,10 @@ function CarreraPage() {
             </Reveal>
             <Reveal variant="stagger" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {CAMPOS_LABORALES.map(({ icon: Icon, area, desc }) => (
-                <div key={area} className="glass card-hover group flex items-start gap-4 rounded-xl p-5">
+                <div
+                  key={area}
+                  className="glass card-hover group flex items-start gap-4 rounded-xl p-5"
+                >
                   <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-foreground/5 ring-1 ring-foreground/10 transition-transform duration-300 group-hover:scale-110">
                     <Icon className="h-4 w-4 text-primary" />
                   </div>
@@ -270,15 +367,35 @@ function CarreraPage() {
             <Reveal className="text-center mb-10">
               <h2 className="text-3xl font-bold sm:text-4xl">Requisitos de titulación</h2>
               <p className="mt-3 text-muted-foreground text-sm max-w-lg mx-auto">
-                Información orientativa según la Guía Académica 2024. Verificar siempre con la institución.
+                Información orientativa según la Guía Académica 2024. Verificar siempre con la
+                institución.
               </p>
             </Reveal>
-            <Reveal variant="stagger" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
+            <Reveal
+              variant="stagger"
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto"
+            >
               {[
-                { icon: BookOpen, title: "Plan de estudios", body: "Aprobar todas las asignaturas del énfasis elegido." },
-                { icon: Users, title: "Extensión universitaria", body: "Completar 30 horas de Extensión Universitaria." },
-                { icon: Briefcase, title: "Pasantía supervisada", body: "Realizar una pasantía de 160–240 horas según el énfasis (verificar en guía oficial)." },
-                { icon: GraduationCap, title: "Trabajo de Grado", body: "Aprobar Anteproyecto y Proyecto de Trabajo de Grado." },
+                {
+                  icon: BookOpen,
+                  title: "Plan de estudios",
+                  body: "Aprobar todas las asignaturas del énfasis elegido.",
+                },
+                {
+                  icon: Users,
+                  title: "Extensión universitaria",
+                  body: "Completar 30 horas de Extensión Universitaria.",
+                },
+                {
+                  icon: Briefcase,
+                  title: "Pasantía supervisada",
+                  body: "Realizar una pasantía de 160–240 horas según el énfasis (verificar en guía oficial).",
+                },
+                {
+                  icon: GraduationCap,
+                  title: "Trabajo de Grado",
+                  body: "Aprobar Anteproyecto y Proyecto de Trabajo de Grado.",
+                },
               ].map(({ icon: Icon, title, body }) => (
                 <div key={title} className="glass card-hover rounded-2xl p-6 text-center">
                   <Icon className="h-6 w-6 text-primary mx-auto mb-3" />
@@ -289,8 +406,10 @@ function CarreraPage() {
             </Reveal>
 
             <Reveal className="mt-8 text-center">
-              <Link to="/recursos"
-                className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium hover:bg-foreground/10">
+              <Link
+                to="/recursos"
+                className="btn-premium glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium hover:bg-foreground/10"
+              >
                 <BookOpen className="h-4 w-4 text-primary" />
                 Ver Guía Académica completa
               </Link>

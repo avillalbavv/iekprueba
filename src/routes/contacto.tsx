@@ -3,7 +3,16 @@
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Instagram, Mail, ExternalLink, ChevronRight, Send, MessageSquare, Facebook, Youtube } from "lucide-react";
+import {
+  Instagram,
+  Mail,
+  ExternalLink,
+  ChevronRight,
+  Send,
+  MessageSquare,
+  Facebook,
+  Youtube,
+} from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SiteNavbar } from "@/components/SiteNavbar";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -25,31 +34,41 @@ const contactSchema = z.object({
 
 const SOCIALS = [
   {
-    icon: Instagram, label: "Instagram", handle: "@iek_fpuna",
+    icon: Instagram,
+    label: "Instagram",
+    handle: "@iek_fpuna",
     href: "https://www.instagram.com/iek_fpuna/",
     desc: "Seguinos para novedades, avisos y actividades.",
     color: "#e1306c",
   },
   {
-    icon: Facebook, label: "Facebook", handle: "Delegación IEK",
+    icon: Facebook,
+    label: "Facebook",
+    handle: "Delegación IEK",
     href: "https://www.facebook.com/DelegacionIEK",
     desc: "Publicaciones, eventos y novedades de la delegación.",
     color: "#1877f2",
   },
   {
-    icon: Youtube, label: "YouTube", handle: "Delegación IEK",
+    icon: Youtube,
+    label: "YouTube",
+    handle: "Delegación IEK",
     href: "https://www.youtube.com/channel/UCoJV8IlpUXYba0VhD1oL8FQ",
     desc: "Charlas, tutoriales y contenido en video.",
     color: "#ff0000",
   },
   {
-    icon: Mail, label: "Correo electrónico", handle: "delegacioniek@gmail.com",
+    icon: Mail,
+    label: "Correo electrónico",
+    handle: "delegacioniek@gmail.com",
     href: "mailto:delegacioniek@gmail.com",
     desc: "Para consultas formales o propuestas.",
     color: "#22d3ee",
   },
   {
-    icon: ExternalLink, label: "Sitio oficial FPUNA", handle: "pol.una.py/carreras/iek/",
+    icon: ExternalLink,
+    label: "Sitio oficial FPUNA",
+    handle: "pol.una.py/carreras/iek/",
     href: "https://www.pol.una.py/carreras/iek/",
     desc: "Canal oficial de la carrera en la Facultad Politécnica.",
     color: "#3b82f6",
@@ -87,7 +106,9 @@ function ContactoPage() {
           <div className="mx-auto max-w-6xl px-6">
             <Reveal className="max-w-3xl">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
+                <Link to="/" className="hover:text-foreground transition-colors">
+                  Inicio
+                </Link>
                 <ChevronRight className="h-3 w-3" />
                 <span className="text-foreground">Contacto</span>
               </div>
@@ -99,11 +120,12 @@ function ContactoPage() {
                 <span className="text-gradient">Contacto</span>
               </h1>
               <p className="mt-5 text-base text-muted-foreground max-w-xl leading-relaxed">
-                ¿Tenés una consulta, propuesta o querés sumarte a la Delegación?
-                Escribinos y te respondemos a la brevedad.
+                ¿Tenés una consulta, propuesta o querés sumarte a la Delegación? Escribinos y te
+                respondemos a la brevedad.
               </p>
               <p className="mt-2 text-xs text-muted-foreground/60">
-                Evitá compartir datos sensibles, contraseñas o documentos personales a través de este formulario.
+                Evitá compartir datos sensibles, contraseñas o documentos personales a través de
+                este formulario.
               </p>
             </Reveal>
           </div>
@@ -114,7 +136,10 @@ function ContactoPage() {
           <div className="mx-auto max-w-6xl px-6">
             <Reveal variant="stagger" className="grid gap-8 lg:grid-cols-5">
               {/* Formulario */}
-              <form onSubmit={onSubmit} className="glass rounded-2xl p-7 sm:p-9 lg:col-span-3 space-y-5">
+              <form
+                onSubmit={onSubmit}
+                className="glass rounded-2xl p-7 sm:p-9 lg:col-span-3 space-y-5"
+              >
                 <h2 className="font-display text-xl font-semibold flex items-center gap-2">
                   <Send className="h-5 w-5 text-primary" />
                   Envianos un mensaje
@@ -123,22 +148,48 @@ function ContactoPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="nombre">Nombre</Label>
-                    <Input id="nombre" name="nombre" placeholder="Tu nombre" maxLength={80} required />
+                    <Input
+                      id="nombre"
+                      name="nombre"
+                      placeholder="Tu nombre"
+                      maxLength={80}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="correo">Correo electrónico</Label>
-                    <Input id="correo" name="correo" type="email" placeholder="tu@correo.com" maxLength={120} required />
+                    <Input
+                      id="correo"
+                      name="correo"
+                      type="email"
+                      placeholder="tu@correo.com"
+                      maxLength={120}
+                      required
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="asunto">Asunto</Label>
-                  <Input id="asunto" name="asunto" placeholder="¿Sobre qué querés escribirnos?" maxLength={120} required />
+                  <Input
+                    id="asunto"
+                    name="asunto"
+                    placeholder="¿Sobre qué querés escribirnos?"
+                    maxLength={120}
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="mensaje">Mensaje</Label>
-                  <Textarea id="mensaje" name="mensaje" rows={6} placeholder="Escribí tu consulta, propuesta o comentario..." maxLength={1000} required />
+                  <Textarea
+                    id="mensaje"
+                    name="mensaje"
+                    rows={6}
+                    placeholder="Escribí tu consulta, propuesta o comentario..."
+                    maxLength={1000}
+                    required
+                  />
                 </div>
 
                 <Button
@@ -163,8 +214,10 @@ function ContactoPage() {
                         rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
                         className="flex items-start gap-4 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-4 transition hover:bg-foreground/9 hover:border-foreground/15 group"
                       >
-                        <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg ring-1 ring-foreground/10"
-                          style={{ background: `${color}18` }}>
+                        <div
+                          className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg ring-1 ring-foreground/10"
+                          style={{ background: `${color}18` }}
+                        >
                           <Icon className="h-4 w-4" style={{ color }} />
                         </div>
                         <div className="min-w-0">
@@ -179,12 +232,17 @@ function ContactoPage() {
 
                 <div className="glass rounded-2xl p-5">
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Para consultas académicas oficiales, inscripciones o trámites
-                    administrativos, contactar directamente con la{" "}
-                    <a href="https://www.pol.una.py/" target="_blank" rel="noopener noreferrer"
-                      className="text-primary hover:underline inline-flex items-center gap-0.5">
+                    Para consultas académicas oficiales, inscripciones o trámites administrativos,
+                    contactar directamente con la{" "}
+                    <a
+                      href="https://www.pol.una.py/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline inline-flex items-center gap-0.5"
+                    >
                       Facultad Politécnica <ExternalLink className="h-3 w-3" />
-                    </a>.
+                    </a>
+                    .
                   </p>
                 </div>
               </aside>
