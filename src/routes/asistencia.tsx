@@ -182,7 +182,10 @@ function AsistenciaPage() {
                     </div>
                   </Reveal>
                 ) : (
-                  <Reveal variant="stagger" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <Reveal
+                    variant="stagger"
+                    className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                  >
                     {materias.map((m) => (
                       <MateriaCard key={m.id} materia={m} onClick={() => setSelectedId(m.id)} />
                     ))}
@@ -212,7 +215,7 @@ function MateriaCard({ materia, onClick }: { materia: Materia; onClick: () => vo
   return (
     <button
       onClick={onClick}
-      className="card-hover w-full rounded-2xl border border-border bg-card p-5 text-left"
+      className="card-hover min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-border bg-card p-5 text-left"
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -232,9 +235,9 @@ function MateriaCard({ materia, onClick }: { materia: Materia; onClick: () => vo
           style={{ width: `${Math.min(100, stats.porcentajeActual)}%`, background: meta.color }}
         />
       </div>
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{stats.porcentajeActual.toFixed(0)}% asistencia</span>
-        <span>
+      <div className="flex min-w-0 items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span className="shrink-0">{stats.porcentajeActual.toFixed(0)}% asistencia</span>
+        <span className="min-w-0 truncate text-right">
           {!hasRecords
             ? "Marcá tu primera clase"
             : stats.derecho === "primera"

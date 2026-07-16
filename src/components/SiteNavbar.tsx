@@ -219,9 +219,7 @@ export function SiteNavbar() {
             >
               <UserRound className="h-4 w-4" />
             </Link>
-            <div className="hidden xl:block">
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
             <a
               href="https://www.pol.una.py/carreras/iek/"
               target="_blank"
@@ -245,7 +243,6 @@ export function SiteNavbar() {
           <div className="mt-2 max-h-[75vh] animate-fade-in overflow-y-auto rounded-2xl border border-border bg-popover p-2 shadow-2xl xl:hidden">
             <div className="mb-1">
               <GlobalCommand menu onClose={() => setOpen(false)} />
-              <ThemeToggle menu />
               {auth.role !== "student" && (
                 <Link
                   to="/admin"
