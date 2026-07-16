@@ -1,6 +1,7 @@
 import RAW from "@/data/poliplanner-horario-2026.json";
 import { normalizeAcademicName } from "./search";
 import { academicNamesMatch } from "./academic-offer-matcher";
+import { esTipoRevision } from "./academic-events";
 import { writeLocalState } from "./user-state";
 
 /* ───────────────────────── Tipos ───────────────────────── */
@@ -326,11 +327,19 @@ export interface ExamEntry {
   fecha: Date;
 }
 
-export function listExamenes(secciones: Seccion[]): ExamEntry[] {
+export interface ListExamenesOptions {
+  incluirRevisiones?: boolean;
+}
+
+export function listExamenes(
+  secciones: Seccion[],
+  { incluirRevisiones = true }: ListExamenesOptions = {},
+): ExamEntry[] {
   const out: ExamEntry[] = [];
   for (const s of secciones) {
     for (const [tipo, info] of Object.entries(s.examenes)) {
       if (!info || !info.dia) continue;
+      if (!incluirRevisiones && esTipoRevision(tipo)) continue;
       const fecha = parseFechaExamen(info.dia);
       if (!fecha) continue;
       out.push({ seccion: s, tipo, info, fecha });

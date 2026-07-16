@@ -23,6 +23,9 @@
 - Añadido registro con confirmación de contraseña y guía de acceso.
 - Completado el Manual de Ingresantes con fuentes institucionales identificadas.
 - Ajustada la asistencia para comenzar en 0 % y aumentar según los registros del estudiante.
+- Separadas las revisiones de los exámenes en Mi Semestre y sus notificaciones.
+- Conectada la confirmación del horario con la Calculadora de Asistencia.
+- Añadido un ejemplo breve y verificable en la Calculadora de Notas.
 
 ## 2026-07-12
 

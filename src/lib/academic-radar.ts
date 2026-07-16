@@ -103,7 +103,7 @@ export function buildAcademicRadar(now = new Date()): RadarSnapshot {
     : null;
   if (nextClass) items.push(nextClass);
 
-  const exams = listExamenes(sections)
+  const exams = listExamenes(sections, { incluirRevisiones: false })
     .map((e) => ({ ...e, at: new Date(`${isoDay(e.fecha)}T${e.info.hora || "00:00"}:00`) }))
     .filter((e) => e.at >= now)
     .sort((a, b) => +a.at - +b.at);

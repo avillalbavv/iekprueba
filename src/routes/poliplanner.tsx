@@ -216,17 +216,7 @@ function PoliPlannerPage() {
     setConfirmedSignature("");
   }
 
-  function confirmarHorario() {
-    if (!enfasis || !materiaIds.length || pendientes > 0 || conflicts.length > 0) return;
-    const selection = { enfasis, materiaIds, secciones: choice };
-    saveSelection(selection);
-    setConfirmedSignature(plannerSignature(enfasis, materiaIds, choice));
-    setSyncMsg(
-      "Horario confirmado. Ya está disponible para ¿Dónde rindo?, el calendario y la sincronización.",
-    );
-  }
-
-  function enviarAAsistencia() {
+  function importarHorarioEnAsistencia(): string {
     const porMateria = new Map<string, { nombre: string; dias: Set<string>; docente?: string }>();
     for (const s of chosenSecciones) {
       const entry = porMateria.get(s.materiaId) ?? { nombre: s.materia, dias: new Set<string>() };
@@ -244,19 +234,30 @@ function PoliPlannerPage() {
       }));
 
     if (payload.length === 0) {
-      setSyncMsg("Ninguna de tus materias elegidas tiene días de clase para enviar.");
-      return;
+      return "Ninguna materia elegida tiene días de clase para importar a Asistencia.";
     }
     const { agregadas, actualizadas } = importarMateriasDesdePoliPlanner(payload);
     const partes = [];
     if (agregadas > 0) partes.push(`${agregadas} nueva${agregadas === 1 ? "" : "s"}`);
     if (actualizadas > 0)
       partes.push(`${actualizadas} actualizada${actualizadas === 1 ? "" : "s"}`);
+    return partes.length
+      ? `Asistencia actualizada: ${partes.join(" · ")}.`
+      : "Tus materias ya estaban al día en la Calculadora de Asistencia.";
+  }
+
+  function confirmarHorario() {
+    if (!enfasis || !materiaIds.length || pendientes > 0 || conflicts.length > 0) return;
+    const selection = { enfasis, materiaIds, secciones: choice };
+    saveSelection(selection);
+    setConfirmedSignature(plannerSignature(enfasis, materiaIds, choice));
     setSyncMsg(
-      partes.length
-        ? `Listo: ${partes.join(" · ")} en la Calculadora de Asistencia.`
-        : "Tus materias ya estaban al día en la Calculadora de Asistencia.",
+      `Horario confirmado. ${importarHorarioEnAsistencia()} También está disponible para ¿Dónde rindo?, el calendario y la sincronización.`,
     );
+  }
+
+  function enviarAAsistencia() {
+    setSyncMsg(importarHorarioEnAsistencia());
   }
 
   const chosenSecciones: Seccion[] = useMemo(() => {
@@ -629,7 +630,7 @@ function PoliPlannerPage() {
                     </div>
                     <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                       {horarioConfirmado
-                        ? "Quedó guardado y ya está disponible para ¿Dónde rindo?, el calendario y la sincronización."
+                        ? "Quedó guardado, se envió a Asistencia y ya está disponible para ¿Dónde rindo?, el calendario y la sincronización."
                         : pendientes > 0
                           ? `Todavía falta elegir una sección para ${pendientes} materia${pendientes === 1 ? "" : "s"}.`
                           : conflicts.length > 0
