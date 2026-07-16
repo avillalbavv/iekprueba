@@ -13,6 +13,11 @@
 ### Datos y administración
 
 - Añadida importación validada de XLSX y CSV desde el panel administrativo.
+- Adaptado el importador al formato oficial FP-UNA con hoja IEK, encabezados multinivel, clases,
+  docentes, departamentos, exámenes, mesas y fechas sabatinas específicas.
+- Reemplazado el criterio de asteriscos por la existencia real de horarios para determinar oferta.
+- Añadida comparación entre revisiones con identificadores estables y avisos solo para secciones
+  afectadas.
 - Conectada la revisión activa de horarios con Planificador, Dónde rindo, calendario y asistencia.
 - Reparadas políticas RLS para publicar avisos, eventos, exámenes, recursos y horarios.
 - Añadidas notificaciones por cambios en la fuente académica y auditoría de operaciones.

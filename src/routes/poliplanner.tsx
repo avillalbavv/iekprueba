@@ -218,10 +218,29 @@ function PoliPlannerPage() {
   }
 
   function importarHorarioEnAsistencia(): string {
-    const porMateria = new Map<string, { nombre: string; dias: Set<string>; docente?: string }>();
+    const porMateria = new Map<
+      string,
+      {
+        nombre: string;
+        dias: Set<string>;
+        fechasPorDia: Map<string, Set<string>>;
+        docente?: string;
+      }
+    >();
     for (const s of chosenSecciones) {
-      const entry = porMateria.get(s.materiaId) ?? { nombre: s.materia, dias: new Set<string>() };
-      s.clases.forEach((c) => entry.dias.add(c.dia));
+      const entry = porMateria.get(s.materiaId) ?? {
+        nombre: s.materia,
+        dias: new Set<string>(),
+        fechasPorDia: new Map<string, Set<string>>(),
+      };
+      s.clases.forEach((c) => {
+        entry.dias.add(c.dia);
+        if (c.fechas?.length) {
+          const dates = entry.fechasPorDia.get(c.dia) ?? new Set<string>();
+          c.fechas.forEach((date) => dates.add(date));
+          entry.fechasPorDia.set(c.dia, dates);
+        }
+      });
       if (!entry.docente) entry.docente = docenteNombre(s.docente);
       porMateria.set(s.materiaId, entry);
     }
@@ -231,6 +250,9 @@ function PoliPlannerPage() {
         materiaId,
         nombre: v.nombre,
         dias: [...v.dias] as DiaSemana[],
+        fechasPorDia: Object.fromEntries(
+          [...v.fechasPorDia].map(([day, dates]) => [day, [...dates].sort()]),
+        ),
         docente: v.docente,
       }));
 

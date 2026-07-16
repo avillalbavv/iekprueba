@@ -70,5 +70,5 @@ export function searchRank(nombre: string, query: string): number {
 
 /** Normaliza sin borrar partes significativas del nombre oficial. */
 export function normalizeAcademicName(nombre: string): string {
-  return normalizeSearch(nombre.replace(/\s*\(\*\)\s*$/u, ""));
+  return normalizeSearch(nombre.replace(/\s*\(\s*\*+\s*\)\s*$/u, ""));
 }

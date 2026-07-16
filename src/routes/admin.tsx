@@ -31,8 +31,7 @@ import {
   type RegisteredUser,
 } from "@/lib/admin-service";
 import { publishScheduleRevision } from "@/lib/schedule-update-service";
-import { parseScheduleFile } from "@/lib/schedule-import-parser";
-import type { Seccion } from "@/lib/poliplanner";
+import { analyzeScheduleFile, type ScheduleParseResult } from "@/lib/schedule-import-parser";
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 type Tab =
   | "dashboard"
@@ -672,17 +671,17 @@ function ScheduleUpdates({
   const [summary, setSummary] = useState("");
   const [sending, setSending] = useState(false);
   const [parsing, setParsing] = useState(false);
-  const [parsedSections, setParsedSections] = useState<Seccion[] | null>(null);
+  const [parseResult, setParseResult] = useState<ScheduleParseResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
 
   async function chooseFile(next: File | null) {
     setFile(next);
-    setParsedSections(null);
+    setParseResult(null);
     setParseError(null);
     if (!next) return;
     setParsing(true);
     try {
-      setParsedSections(await parseScheduleFile(next));
+      setParseResult(await analyzeScheduleFile(next));
     } catch (error) {
       setParseError(error instanceof Error ? error.message : "No se pudo procesar el archivo.");
     } finally {
@@ -692,19 +691,19 @@ function ScheduleUpdates({
 
   async function publish(event: React.FormEvent) {
     event.preventDefault();
-    if (!file || !parsedSections) return;
+    if (!file || !parseResult) return;
     setSending(true);
     await perform(async () => {
       try {
-        await publishScheduleRevision(file, summary, parsedSections);
+        await publishScheduleRevision(file, summary, parseResult.sections);
         setFile(null);
-        setParsedSections(null);
+        setParseResult(null);
         setSummary("");
         await reload();
       } finally {
         setSending(false);
       }
-    }, `${parsedSections.length} secciones publicadas. Planificador, ¿Dónde rindo?, asistencia, promedio y exámenes usarán esta versión.`);
+    }, `${parseResult.totalSections} secciones publicadas. Planificador, ¿Dónde rindo?, asistencia, promedio y exámenes usarán esta versión.`);
   }
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
@@ -722,18 +721,33 @@ function ScheduleUpdates({
           className="mt-4 block w-full text-sm"
         />
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-          Columnas mínimas: <b>Materia</b> y <b>Sección</b>. Para actualizar todas las vistas incluí
-          Turno, Plan, Semestre, Departamento, días de clase, horarios, aulas y fechas de examen.
+          En libros oficiales se procesa únicamente la hoja <b>IEK</b>. El sistema reconstruye los
+          encabezados agrupados y detecta materias, secciones, departamentos, docentes, clases,
+          aulas y exámenes.
         </p>
         {parsing && (
           <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Verificando columnas y secciones…
           </p>
         )}
-        {parsedSections && (
-          <p className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300">
-            Archivo válido: <b>{parsedSections.length} secciones</b> listas para publicar.
-          </p>
+        {parseResult && (
+          <div className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300">
+            <p>
+              Hoja <b>{parseResult.sheetName}</b>: <b>{parseResult.totalSections} secciones</b>
+              detectadas.
+            </p>
+            <p className="mt-1">
+              {parseResult.offeredSections} con clases · {parseResult.examOnlySections} solo con
+              exámenes
+            </p>
+            {parseResult.warnings.length > 0 && (
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-amber-700 dark:text-amber-300">
+                {parseResult.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
         {parseError && (
           <p className="mt-3 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-xs text-red-700 dark:text-red-300">
@@ -749,7 +763,7 @@ function ScheduleUpdates({
           className="mt-3 w-full rounded-xl border border-input bg-background p-3"
         />
         <button
-          disabled={sending || parsing || !parsedSections}
+          disabled={sending || parsing || !parseResult}
           className="mt-3 w-full rounded-xl bg-primary p-3 text-primary-foreground disabled:opacity-50"
         >
           {sending ? "Publicando…" : "Publicar y actualizar herramientas"}

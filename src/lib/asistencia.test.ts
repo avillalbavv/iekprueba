@@ -43,6 +43,13 @@ test("una clase justificada es neutral para el porcentaje", () => {
   );
 });
 
+test("respeta las fechas sabatinas específicas informadas por el Excel", () => {
+  assert.deepEqual(generarFechasClase(["Sábado"], { Sábado: ["2026-08-22", "2026-10-03"] }), [
+    "2026-08-22",
+    "2026-10-03",
+  ]);
+});
+
 test("no existe un umbral inferior exclusivo para la segunda convocatoria", () => {
   assert.equal(UMBRAL_PRIMERA_CONVOCATORIA, 70);
   assert.equal(UMBRAL_SEGUNDA_CONVOCATORIA, 70);

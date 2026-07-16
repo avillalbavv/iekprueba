@@ -3,6 +3,9 @@ import { normalizeAcademicName } from "./search";
 import { academicNamesMatch } from "./academic-offer-matcher";
 import { esTipoRevision } from "./academic-events";
 import { writeLocalState } from "./user-state";
+import { normalizeScheduleData } from "./schedule-data-normalizer";
+
+export { normalizeScheduleData } from "./schedule-data-normalizer";
 
 /* ───────────────────────── Tipos ───────────────────────── */
 
@@ -17,6 +20,7 @@ export interface ClaseInfo {
   dia: string; // Lunes..Sábado
   hora: string; // "HH:MM - HH:MM"
   aula: string | null;
+  fechas?: string[]; // Fechas ISO cuando la fuente limita una clase a días concretos.
 }
 
 export interface ExamenInfo {
@@ -56,35 +60,6 @@ export interface MateriaGroup {
 }
 
 /* ───────────────────────── Datos ───────────────────────── */
-
-const SEMESTRES_CORREGIDOS: Record<string, number> = {
-  "dibujo tecnico": 2,
-  quimica: 2,
-  "diseno asistido por computadora": 3,
-};
-
-function materiaIdEstable(materia: string, semestre: string | number, plan: string): string {
-  const limpio = normalizeAcademicName(materia).replace(/\s+/g, "-");
-  const planLimpio = normalizeAcademicName(plan).replace(/\s+/g, "-") || "sin-plan";
-  return `iek-plan-${planLimpio}-${String(semestre).trim() || "sin-semestre"}-${limpio}`;
-}
-
-export function normalizeScheduleData(
-  source: Omit<Seccion, "materiaId" | "nombreNormalizado">[] | Seccion[],
-): Seccion[] {
-  return source
-    .filter((s) => s.materia)
-    .map((s) => {
-      const nombreNormalizado = normalizeAcademicName(s.materia);
-      const semGrupo = SEMESTRES_CORREGIDOS[nombreNormalizado] ?? s.semGrupo;
-      return {
-        ...s,
-        semGrupo,
-        materiaId: materiaIdEstable(s.materia, semGrupo, s.plan),
-        nombreNormalizado,
-      };
-    });
-}
 
 /** Oferta enriquecida y mutable en el lugar: fuente común para todas las herramientas. */
 export const DATA: Seccion[] = normalizeScheduleData(
@@ -435,9 +410,9 @@ export function nombreOfertadoParaMalla(nombreMalla: string): string | null {
 const seccionesPorMateriaCache = new Map<string, Seccion[]>();
 const seccionesCursablesCache = new Map<string, Seccion[]>();
 
-/** El Excel marca con asteriscos las mesas habilitadas únicamente para examen final. */
-export function esSeccionSoloExamen(section: Pick<Seccion, "materia">): boolean {
-  return /\*/.test(section.materia);
+/** Una sección es solo de examen cuando la fuente oficial no informa ningún horario de clase. */
+export function esSeccionSoloExamen(section: Pick<Seccion, "clases">): boolean {
+  return section.clases.length === 0;
 }
 
 /** Nombre apto para mostrar, sin la marca operativa del Excel. */
@@ -464,12 +439,12 @@ export function seccionesPorMateriaMalla(nombreMalla: string, plan = "2008"): Se
   return result;
 }
 
-/** Secciones con clases regulares; excluye explícitamente las mesas solo-final. */
+/** Secciones con al menos un horario semanal válido informado por la fuente oficial. */
 export function seccionesCursablesPorMateriaMalla(nombreMalla: string, plan = "2008"): Seccion[] {
   const cacheKey = `${plan}::${nombreMalla}`;
   if (seccionesCursablesCache.has(cacheKey)) return seccionesCursablesCache.get(cacheKey)!;
   const result = seccionesPorMateriaMalla(nombreMalla, plan).filter(
-    (section) => !esSeccionSoloExamen(section) && section.clases.length > 0,
+    (section) => !esSeccionSoloExamen(section),
   );
   seccionesCursablesCache.set(cacheKey, result);
   return result;

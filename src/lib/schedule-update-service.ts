@@ -1,7 +1,10 @@
 import { supabase } from "./supabase.ts";
 import { upsertNotification } from "./notification-service.ts";
 import { writeLocalState } from "./user-state.ts";
-import { replaceScheduleData, type Seccion } from "./poliplanner.ts";
+import { DATA, replaceScheduleData, type Seccion } from "./poliplanner.ts";
+import { compareScheduleDatasets } from "./schedule-dataset-diff.ts";
+
+export { compareScheduleDatasets } from "./schedule-dataset-diff.ts";
 
 const ACK_KEY = "iek-schedule-revision:v1";
 const DATA_CACHE_KEY = "iek-schedule-dataset:v1";
@@ -125,6 +128,21 @@ export async function publishScheduleRevision(
     throw new Error("Procesá y verificá las secciones del archivo antes de publicarlo.");
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Sesión administrativa requerida");
+  const { data: activeRevision } = await supabase
+    .from("schedule_revisions")
+    .select("sections")
+    .eq("is_active", true)
+    .not("sections", "is", null)
+    .order("revision", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const previousSections = Array.isArray(activeRevision?.sections)
+    ? (activeRevision.sections as Seccion[])
+    : DATA;
+  const delta = compareScheduleDatasets(previousSections, sections);
+  if (!delta.affectsAll && delta.added + delta.changed + delta.removed === 0) {
+    throw new Error("El archivo no contiene cambios respecto de la versión publicada.");
+  }
   const checksum = [
     ...new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())),
   ]
@@ -150,10 +168,12 @@ export async function publishScheduleRevision(
       file_path: path,
       checksum,
       change_summary: summary.trim(),
-      affects_all: true,
+      affects_all: delta.affectsAll,
+      affected_subject_ids: delta.affectedSubjectIds,
+      affected_section_ids: delta.affectedSectionIds,
       published_by: userData.user.id,
-      sections,
-      section_count: sections.length,
+      sections: delta.sections,
+      section_count: delta.sections.length,
       source_format: extension,
     })
     .select("id,revision")
@@ -169,6 +189,6 @@ export async function publishScheduleRevision(
     .neq("id", revision.id)
     .eq("is_active", true)
     .not("sections", "is", null);
-  activateDataset({ revision: Number(revision.revision), sections });
-  return sections.length;
+  activateDataset({ revision: Number(revision.revision), sections: delta.sections });
+  return delta.sections.length;
 }

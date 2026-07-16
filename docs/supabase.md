@@ -88,6 +88,21 @@ Con cuentas separadas de estudiante y administrador:
 7. Revisar que las operaciones anteriores estén en auditoría.
 8. Enviar un mensaje desde `/contacto` y comprobar que aparezca en **Mensajes**.
 
+### Importación del horario oficial
+
+- En libros XLSX de la FP-UNA se procesa únicamente la hoja `IEK`; también se acepta `IECA` como
+  alias controlado.
+- El importador admite encabezados combinados de dos niveles y reconoce departamento, asignatura,
+  plan, énfasis, turno, sección, docente, parciales, finales, revisiones, mesa examinadora, aulas y
+  horarios semanales.
+- Una sección se considera cursable cuando posee al menos un horario semanal válido. Los símbolos
+  `(*)` y `(**)` no se usan como criterio de oferta.
+- Las filas sin clases pero con exámenes se conservan para **¿Dónde rindo?**; las filas sin clases ni
+  exámenes se ignoran y se informan antes de publicar.
+- Las fechas sabatinas específicas del turno noche se conservan y se transfieren a Asistencia.
+- Cada publicación se compara con la revisión activa. Se preservan los identificadores de las
+  secciones sin cambios y las notificaciones se limitan a las materias o secciones afectadas.
+
 ## Sincronización personal
 
 Al iniciar sesión se comparan los datos locales y remotos por herramienta. Antes de combinar estados

@@ -53,14 +53,24 @@ function toISO(d: Date): string {
 }
 
 /** Todas las fechas de clase de una materia en el semestre, ya sin feriados. */
-export function generarFechasClase(dias: DiaSemana[]): string[] {
+export function generarFechasClase(
+  dias: DiaSemana[],
+  fechasPorDia: Partial<Record<DiaSemana, string[]>> = {},
+): string[] {
   const dowSet = new Set(dias.map((d) => DOW[d]));
+  const dayByDow = new Map(Object.entries(DOW).map(([day, dow]) => [dow, day as DiaSemana]));
+  const specificSets = new Map(
+    Object.entries(fechasPorDia).map(([day, dates]) => [day, new Set(dates || [])]),
+  );
   const start = new Date(SEMESTRE_INICIO + "T00:00:00");
   const end = new Date(SEMESTRE_FIN + "T00:00:00");
   const fechas: string[] = [];
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     if (!dowSet.has(d.getDay())) continue;
     const iso = toISO(d);
+    const day = dayByDow.get(d.getDay());
+    const specific = day ? specificSets.get(day) : undefined;
+    if (specific?.size && !specific.has(iso)) continue;
     if (FERIADOS_SET.has(iso)) continue;
     fechas.push(iso);
   }
@@ -101,6 +111,7 @@ export interface Materia {
   carrera: string;
   docente: string;
   dias: DiaSemana[];
+  fechasPorDia?: Partial<Record<DiaSemana, string[]>>;
   asistencias: Record<string, EstadoClase>; // fecha ISO -> estado
   practicasLab: PracticasLab | null; // null = la materia no tiene prácticas obligatorias
 }
@@ -153,7 +164,7 @@ function hoyISO(): string {
 }
 
 export function calcularStats(m: Materia): MateriaStats {
-  const fechas = generarFechasClase(m.dias);
+  const fechas = generarFechasClase(m.dias, m.fechasPorDia);
   const hoy = hoyISO();
 
   const noSuspendidas = fechas.filter((f) => m.asistencias[f] !== "suspendida");
@@ -315,6 +326,7 @@ export interface MateriaImportable {
   materiaId?: string;
   nombre: string;
   dias: DiaSemana[];
+  fechasPorDia?: Partial<Record<DiaSemana, string[]>>;
   docente?: string;
 }
 
@@ -343,8 +355,15 @@ export function importarMateriasDesdePoliPlanner(nuevas: MateriaImportable[]): {
       const mismosDias =
         existente.dias.length === n.dias.length && existente.dias.every((d) => n.dias.includes(d));
       const mismoDocente = !n.docente || existente.docente === n.docente;
-      if (!mismosDias || !mismoDocente) {
-        materias[idx] = { ...existente, dias: n.dias, docente: n.docente || existente.docente };
+      const mismasFechas =
+        JSON.stringify(existente.fechasPorDia || {}) === JSON.stringify(n.fechasPorDia || {});
+      if (!mismosDias || !mismoDocente || !mismasFechas) {
+        materias[idx] = {
+          ...existente,
+          dias: n.dias,
+          fechasPorDia: n.fechasPorDia,
+          docente: n.docente || existente.docente,
+        };
         actualizadas++;
       }
     } else {
@@ -355,6 +374,7 @@ export function importarMateriasDesdePoliPlanner(nuevas: MateriaImportable[]): {
           carrera: "IEK",
           docente: n.docente ?? "",
           dias: n.dias,
+          fechasPorDia: n.fechasPorDia,
         }),
       );
       agregadas++;
