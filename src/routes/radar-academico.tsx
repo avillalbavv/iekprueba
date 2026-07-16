@@ -107,10 +107,6 @@ function RadarPage() {
             Todo lo importante de tu cursada en un solo lugar: próximas clases, exámenes, riesgos,
             trámites y acciones recomendadas según tus datos reales.
           </p>
-          <p className="mt-3 text-sm text-muted-foreground/75">
-            La información sin confirmación oficial se identifica claramente y nunca se completa con
-            datos inventados.
-          </p>
         </Reveal>
         {!snapshot.selectedSections.length && (
           <div className="mt-8 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm">
