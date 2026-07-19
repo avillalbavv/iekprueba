@@ -1,15 +1,3 @@
 {
-  "games": [
-    {
-      "id": "pokemon-rojo-fuego",
-      "title": "Pokémon Rojo Fuego",
-      "description": "Regresa a la región de Kanto en esta versión mejorada del clásico original para Game Boy Advance, con gráficos renovados, nuevas funciones y soporte para el adaptador inalámbrico.",
-      "author": "Game Freak / Nintendo",
-      "license": "Proprietary",
-      "licenseUrl": "https://www.nintendo.com/terms-of-use/",
-      "sourceUrl": "https://www.pokemon.com/es/videojuegos/pokemon-version-rojo-fuego-y-pokemon-version-verde-hoja",
-      "rom": "/roms/PokemonRojoFuego.gba",
-      "cover": "/roms/PokemonRojoFuego.webp"
-    }
-  ]
+  "games": []
 }
