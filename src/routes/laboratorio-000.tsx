@@ -7,7 +7,6 @@ import {
   LoaderCircle,
   Play,
   RotateCcw,
-  ShieldCheck,
   Upload,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -53,7 +52,7 @@ function SecretGbaLab() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>({
     kind: "info",
-    text: "Elegí una copia legal en formato .gba. El archivo permanece únicamente en tu dispositivo.",
+    text: "Seleccioná un archivo .gba.",
   });
 
   useEffect(() => {
@@ -69,7 +68,7 @@ function SecretGbaLab() {
         if (error instanceof DOMException && error.name === "AbortError") return;
         setNotice({
           kind: "error",
-          text: "El catálogo público no pudo cargarse. Todavía podés abrir una ROM local.",
+          text: "No se pudo cargar la biblioteca.",
         });
       })
       .finally(() => setCatalogLoading(false));
@@ -92,7 +91,7 @@ function SecretGbaLab() {
     window.EJS_askBeforeExit = false;
     window.EJS_disableAutoUnload = false;
     window.EJS_ready = () =>
-      setNotice({ kind: "info", text: "Núcleo mGBA listo. Iniciando el cartucho…" });
+      setNotice({ kind: "info", text: "Iniciando…" });
     window.EJS_onGameStart = () => {
       setBusy(false);
       setNotice({ kind: "success", text: "Cartucho iniciado correctamente." });
@@ -106,7 +105,7 @@ function SecretGbaLab() {
       setBusy(false);
       setNotice({
         kind: "error",
-        text: "No se pudo descargar el núcleo del emulador. Revisá tu conexión e intentá de nuevo.",
+        text: "No se pudo iniciar el emulador.",
       });
     };
     document.body.appendChild(script);
@@ -126,7 +125,7 @@ function SecretGbaLab() {
       return;
     }
     if (file.size < MIN_ROM_BYTES || file.size > MAX_ROM_BYTES) {
-      setNotice({ kind: "error", text: "La ROM no parece válida o supera el máximo de 32 MB." });
+      setNotice({ kind: "error", text: "Archivo inválido o mayor a 32 MB." });
       return;
     }
 
@@ -141,10 +140,10 @@ function SecretGbaLab() {
         url: URL.createObjectURL(file),
         local: true,
       });
-      setNotice({ kind: "info", text: "Cargando el núcleo mGBA y preparando el cartucho…" });
+      setNotice({ kind: "info", text: "Cargando…" });
     } catch {
       setBusy(false);
-      setNotice({ kind: "error", text: "No se pudo leer esta ROM. Probá con otra copia." });
+      setNotice({ kind: "error", text: "No se pudo leer el archivo." });
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -158,7 +157,7 @@ function SecretGbaLab() {
       url: game.rom,
       local: false,
     });
-    setNotice({ kind: "info", text: `Preparando ${game.title} con el núcleo mGBA…` });
+    setNotice({ kind: "info", text: `Cargando ${game.title}…` });
   }
 
   return (
@@ -182,14 +181,11 @@ function SecretGbaLab() {
         <section className="mt-6 grid flex-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div>
             <div className="mb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-300/70">
-                Señal recuperada
-              </p>
               <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-5xl">
                 Módulo portátil <span className="text-red-400">GBA</span>
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
-                Elegí un juego libre del catálogo o abrí una copia legal desde tu dispositivo.
+                Elegí un juego o cargá un archivo .gba.
               </p>
             </div>
 
@@ -201,9 +197,6 @@ function SecretGbaLab() {
                       <BookOpen className="h-4 w-4 text-red-400" />
                       <h2 id="catalog-title">Biblioteca pública</h2>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Homebrew y juegos con permiso explícito de redistribución.
-                    </p>
                   </div>
                 </div>
 
@@ -263,11 +256,7 @@ function SecretGbaLab() {
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center">
-                    <p className="text-sm font-semibold text-slate-300">La biblioteca está lista.</p>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                      Agregá ROMs redistribuibles en <code>public/roms/</code> y sus fichas en el
-                      catálogo JSON.
-                    </p>
+                    <p className="text-sm font-semibold text-slate-400">Sin juegos disponibles.</p>
                   </div>
                 )}
               </section>
@@ -310,9 +299,6 @@ function SecretGbaLab() {
                       <Upload className="h-10 w-10 text-red-400" />
                     )}
                     <span className="text-sm font-semibold">Insertar cartucho .gba</span>
-                    <span className="max-w-xs px-4 text-center text-xs text-slate-500">
-                      Se procesa localmente y no se sube a la plataforma
-                    </span>
                   </button>
                 )}
               </div>
@@ -354,29 +340,11 @@ function SecretGbaLab() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-200">
-                <ShieldCheck className="h-4 w-4 text-emerald-400" /> Privacidad local
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                La ROM se abre mediante una URL temporal del navegador. No se envía a Cloudflare,
-                Supabase ni a ningún servidor del proyecto.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-xs leading-relaxed text-slate-500">
-              <p className="font-bold text-slate-300">Controles y partidas</p>
-              <p className="mt-2">
-                El reproductor incluye teclado, mando, controles táctiles, sonido, pantalla completa
-                y guardados locales desde su propia barra de herramientas.
-              </p>
-            </div>
           </aside>
         </section>
 
         <p className="mt-8 text-center text-[10px] leading-relaxed text-slate-600">
-          Emulador sin juegos ni firmware propietario. Pokémon y Game Boy Advance son marcas de sus
-          respectivos titulares. Usá únicamente copias obtenidas legalmente.
+          Usá archivos que tengas derecho a utilizar.
         </p>
       </main>
     </div>
