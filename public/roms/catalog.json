@@ -63,8 +63,8 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.sega.com",
       "sourceUrl": "https://www.sonicthehedgehog.com",
-      "rom": "/roms/sonic-2.md",
-      "cover": "/roms/sonic-2.webp"
+      "rom": "/roms/sonic-the-hedgehog-2.md",
+      "cover": "/roms/sonic-the-hedgehog-2.webp"
     },
     {
       "id": "metroid-fusion",
