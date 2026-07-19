@@ -7,19 +7,15 @@ import {
   LoaderCircle,
   Play,
   RotateCcw,
-  Upload,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { parseRomCatalog, type RomCatalogEntry } from "../lib/rom-catalog";
 
 export const Route = createFileRoute("/laboratorio-000")({ component: SecretGbaLab });
 
 const EMULATOR_DATA_URL = "https://cdn.emulatorjs.org/stable/data/";
-const MAX_ROM_BYTES = 32 * 1024 * 1024;
-const MIN_ROM_BYTES = 192;
-
 type Notice = { kind: "error" | "success" | "info"; text: string };
-type RomSession = { gameId: string; title: string; url: string; local: boolean };
+type RomSession = { gameId: string; title: string; url: string };
 
 declare global {
   interface Window {
@@ -40,19 +36,14 @@ declare global {
   }
 }
 
-function readAscii(bytes: Uint8Array, start: number, end: number) {
-  return new TextDecoder("ascii").decode(bytes.subarray(start, end)).replace(/\0/g, "").trim();
-}
-
 function SecretGbaLab() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [session, setSession] = useState<RomSession | null>(null);
   const [catalog, setCatalog] = useState<RomCatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>({
     kind: "info",
-    text: "Seleccioná un archivo .gba.",
+    text: "Elegí un juego de la biblioteca.",
   });
 
   useEffect(() => {
@@ -87,7 +78,7 @@ function SecretGbaLab() {
     window.EJS_startOnLoaded = true;
     window.EJS_language = "es";
     window.EJS_gameID = session.gameId;
-    window.EJS_color = "#ef4444";
+    window.EJS_color = "#3b82f6";
     window.EJS_askBeforeExit = false;
     window.EJS_disableAutoUnload = false;
     window.EJS_ready = () =>
@@ -112,42 +103,10 @@ function SecretGbaLab() {
 
     return () => {
       script.remove();
-      if (session.local) URL.revokeObjectURL(session.url);
       delete window.EJS_ready;
       delete window.EJS_onGameStart;
     };
   }, [session]);
-
-  async function handleRom(file: File | undefined) {
-    if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".gba")) {
-      setNotice({ kind: "error", text: "El archivo debe tener extensión .gba." });
-      return;
-    }
-    if (file.size < MIN_ROM_BYTES || file.size > MAX_ROM_BYTES) {
-      setNotice({ kind: "error", text: "Archivo inválido o mayor a 32 MB." });
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const header = new Uint8Array(await file.slice(0, MIN_ROM_BYTES).arrayBuffer());
-      const title = readAscii(header, 0xa0, 0xac) || "Cartucho GBA";
-      const code = readAscii(header, 0xac, 0xb0) || file.name;
-      setSession({
-        title,
-        gameId: `iek-gba-${code.toLowerCase()}`,
-        url: URL.createObjectURL(file),
-        local: true,
-      });
-      setNotice({ kind: "info", text: "Cargando…" });
-    } catch {
-      setBusy(false);
-      setNotice({ kind: "error", text: "No se pudo leer el archivo." });
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  }
 
   function playCatalogRom(game: RomCatalogEntry) {
     setBusy(true);
@@ -155,25 +114,24 @@ function SecretGbaLab() {
       title: game.title,
       gameId: `iek-gba-${game.id}`,
       url: game.rom,
-      local: false,
     });
     setNotice({ kind: "info", text: `Cargando ${game.title}…` });
   }
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#090b12] text-slate-100">
-      <div className="pointer-events-none fixed inset-0 opacity-70 [background-image:radial-gradient(circle_at_20%_15%,rgba(239,68,68,0.16),transparent_30%),radial-gradient(circle_at_85%_75%,rgba(59,130,246,0.12),transparent_32%),linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:auto,auto,32px_32px,32px_32px]" />
+      <div className="pointer-events-none fixed inset-0 opacity-70 [background-image:radial-gradient(circle_at_20%_15%,rgba(59,130,246,0.18),transparent_30%),radial-gradient(circle_at_85%_75%,rgba(14,165,233,0.12),transparent_32%),linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:auto,auto,32px_32px,32px_32px]" />
       <main className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-8">
         <header className="flex items-center justify-between gap-4">
           <a
             href="/"
             aria-label="Volver a la plataforma"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 transition hover:border-red-400/35 hover:bg-red-400/10 hover:text-white"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 transition hover:border-blue-400/35 hover:bg-blue-400/10 hover:text-white"
           >
             <ChevronLeft className="h-4 w-4" /> Salir
           </a>
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-red-300/75">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.9)]" />
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-blue-300/75">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.9)]" />
             Laboratorio 000
           </div>
         </header>
@@ -182,10 +140,10 @@ function SecretGbaLab() {
           <div>
             <div className="mb-5">
               <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-5xl">
-                Módulo portátil <span className="text-red-400">GBA</span>
+                Módulo portátil <span className="text-blue-400">GBA</span>
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
-                Elegí un juego o cargá un archivo .gba.
+                Un espacio para relajarte y despejarte entre clases.
               </p>
             </div>
 
@@ -194,7 +152,7 @@ function SecretGbaLab() {
                 <div className="mb-3 flex items-end justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-200">
-                      <BookOpen className="h-4 w-4 text-red-400" />
+                      <BookOpen className="h-4 w-4 text-blue-400" />
                       <h2 id="catalog-title">Biblioteca pública</h2>
                     </div>
                   </div>
@@ -219,7 +177,7 @@ function SecretGbaLab() {
                               className="h-20 w-20 rounded-xl object-cover [image-rendering:pixelated]"
                             />
                           ) : (
-                            <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-red-400/10 text-red-300">
+                            <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-blue-400/10 text-blue-300">
                               <Gamepad2 className="h-7 w-7" />
                             </div>
                           )}
@@ -246,7 +204,7 @@ function SecretGbaLab() {
                             type="button"
                             onClick={() => playCatalogRom(game)}
                             disabled={busy}
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-500 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-400 disabled:opacity-50"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-400 disabled:opacity-50"
                           >
                             <Play className="h-3.5 w-3.5" /> Jugar
                           </button>
@@ -262,7 +220,7 @@ function SecretGbaLab() {
               </section>
             )}
 
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#111521] p-3 shadow-[0_30px_100px_-30px_rgba(239,68,68,0.35)] sm:p-5">
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#111521] p-3 shadow-[0_30px_100px_-30px_rgba(59,130,246,0.35)] sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3 px-1">
                 <div className="min-w-0">
                   <p className="truncate text-xs font-bold uppercase tracking-[0.16em] text-slate-300">
@@ -276,7 +234,7 @@ function SecretGbaLab() {
                   <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-red-400/30 hover:bg-red-400/10 hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-blue-400/30 hover:bg-blue-400/10 hover:text-white"
                   >
                     <RotateCcw className="h-3.5 w-3.5" /> Cambiar cartucho
                   </button>
@@ -287,19 +245,10 @@ function SecretGbaLab() {
                 {session ? (
                   <div id="gba-emulator" className="h-full min-h-[280px] w-full sm:min-h-[440px]" />
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={busy}
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-300 transition hover:bg-white/[0.03] hover:text-white"
-                  >
-                    {busy ? (
-                      <LoaderCircle className="h-10 w-10 animate-spin text-red-400" />
-                    ) : (
-                      <Upload className="h-10 w-10 text-red-400" />
-                    )}
-                    <span className="text-sm font-semibold">Insertar cartucho .gba</span>
-                  </button>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center text-slate-300">
+                    <Gamepad2 className="h-10 w-10 text-blue-400" />
+                    <span className="text-sm font-semibold">Elegí un juego de la biblioteca para comenzar</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -308,24 +257,13 @@ function SecretGbaLab() {
           <aside className="space-y-4 lg:sticky lg:top-8">
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-200">
-                <Gamepad2 className="h-4 w-4 text-red-400" /> Mi ROM
+                <Gamepad2 className="h-4 w-4 text-blue-400" /> Un respiro entre clases
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".gba,application/octet-stream"
-                className="sr-only"
-                onChange={(event) => handleRom(event.target.files?.[0])}
-              />
-              <button
-                type="button"
-                onClick={() => (session ? window.location.reload() : fileInputRef.current?.click())}
-                disabled={busy}
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/25 bg-red-400/10 px-3 py-3 text-sm font-bold text-red-200 transition hover:border-red-300/45 hover:bg-red-400/15 disabled:opacity-50"
-              >
-                {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {session ? "Cambiar cartucho" : "Cargar mi ROM .gba"}
-              </button>
+              <ol className="mt-3 space-y-2 text-xs leading-relaxed text-slate-400">
+                <li><span className="font-bold text-blue-300">1.</span> Elegí un juego de la biblioteca.</li>
+                <li><span className="font-bold text-blue-300">2.</span> Pulsá Jugar y esperá unos segundos.</li>
+                <li><span className="font-bold text-blue-300">3.</span> Usá los controles que aparecen en el emulador.</li>
+              </ol>
               <p
                 role="status"
                 className={`mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed ${
@@ -344,7 +282,7 @@ function SecretGbaLab() {
         </section>
 
         <p className="mt-8 text-center text-[10px] leading-relaxed text-slate-600">
-          Usá archivos que tengas derecho a utilizar.
+          Una pausa breve también forma parte del ritmo de estudio.
         </p>
       </main>
     </div>
