@@ -19,6 +19,7 @@ import { Route as PoliplannerRouteImport } from './routes/poliplanner'
 import { Route as PlanDeEstudioRouteImport } from './routes/plan-de-estudio'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as ManualDeBichosRouteImport } from './routes/manual-de-bichos'
+import { Route as Laboratorio000RouteImport } from './routes/laboratorio-000'
 import { Route as GeneradorSemestreRouteImport } from './routes/generador-semestre'
 import { Route as DelegacionRouteImport } from './routes/delegacion'
 import { Route as CuentaRouteImport } from './routes/cuenta'
@@ -80,6 +81,11 @@ const MapaRoute = MapaRouteImport.update({
 const ManualDeBichosRoute = ManualDeBichosRouteImport.update({
   id: '/manual-de-bichos',
   path: '/manual-de-bichos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Laboratorio000Route = Laboratorio000RouteImport.update({
+  id: '/laboratorio-000',
+  path: '/laboratorio-000',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GeneradorSemestreRoute = GeneradorSemestreRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/cuenta': typeof CuentaRoute
   '/delegacion': typeof DelegacionRoute
   '/generador-semestre': typeof GeneradorSemestreRoute
+  '/laboratorio-000': typeof Laboratorio000Route
   '/manual-de-bichos': typeof ManualDeBichosRoute
   '/mapa': typeof MapaRoute
   '/plan-de-estudio': typeof PlanDeEstudioRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/cuenta': typeof CuentaRoute
   '/delegacion': typeof DelegacionRoute
   '/generador-semestre': typeof GeneradorSemestreRoute
+  '/laboratorio-000': typeof Laboratorio000Route
   '/manual-de-bichos': typeof ManualDeBichosRoute
   '/mapa': typeof MapaRoute
   '/plan-de-estudio': typeof PlanDeEstudioRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/cuenta': typeof CuentaRoute
   '/delegacion': typeof DelegacionRoute
   '/generador-semestre': typeof GeneradorSemestreRoute
+  '/laboratorio-000': typeof Laboratorio000Route
   '/manual-de-bichos': typeof ManualDeBichosRoute
   '/mapa': typeof MapaRoute
   '/plan-de-estudio': typeof PlanDeEstudioRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/delegacion'
     | '/generador-semestre'
+    | '/laboratorio-000'
     | '/manual-de-bichos'
     | '/mapa'
     | '/plan-de-estudio'
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/delegacion'
     | '/generador-semestre'
+    | '/laboratorio-000'
     | '/manual-de-bichos'
     | '/mapa'
     | '/plan-de-estudio'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/delegacion'
     | '/generador-semestre'
+    | '/laboratorio-000'
     | '/manual-de-bichos'
     | '/mapa'
     | '/plan-de-estudio'
@@ -304,6 +316,7 @@ export interface RootRouteChildren {
   CuentaRoute: typeof CuentaRoute
   DelegacionRoute: typeof DelegacionRoute
   GeneradorSemestreRoute: typeof GeneradorSemestreRoute
+  Laboratorio000Route: typeof Laboratorio000Route
   ManualDeBichosRoute: typeof ManualDeBichosRoute
   MapaRoute: typeof MapaRoute
   PlanDeEstudioRoute: typeof PlanDeEstudioRoute
@@ -386,6 +399,13 @@ declare module '@tanstack/react-router' {
       path: '/manual-de-bichos'
       fullPath: '/manual-de-bichos'
       preLoaderRoute: typeof ManualDeBichosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laboratorio-000': {
+      id: '/laboratorio-000'
+      path: '/laboratorio-000'
+      fullPath: '/laboratorio-000'
+      preLoaderRoute: typeof Laboratorio000RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/generador-semestre': {
@@ -488,6 +508,7 @@ const rootRouteChildren: RootRouteChildren = {
   CuentaRoute: CuentaRoute,
   DelegacionRoute: DelegacionRoute,
   GeneradorSemestreRoute: GeneradorSemestreRoute,
+  Laboratorio000Route: Laboratorio000Route,
   ManualDeBichosRoute: ManualDeBichosRoute,
   MapaRoute: MapaRoute,
   PlanDeEstudioRoute: PlanDeEstudioRoute,

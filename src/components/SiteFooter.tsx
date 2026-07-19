@@ -103,9 +103,18 @@ export function SiteFooter() {
             </Link>
           </div>
         </div>
-        <p className="mt-4 text-center text-[11px] text-muted-foreground/45">
-          Sitio estudiantil orientativo · No reemplaza los canales oficiales de la FP-UNA.
-        </p>
+        <div className="mt-4 flex items-center justify-center gap-2 text-center text-[11px] text-muted-foreground/45">
+          <p>Sitio estudiantil orientativo · No reemplaza los canales oficiales de la FP-UNA.</p>
+          <Link
+            to="/laboratorio-000"
+            aria-label="Abrir señal desconocida"
+            title="¿Qué es esto?"
+            className="group relative grid h-4 w-4 shrink-0 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
+          >
+            <span className="absolute h-3 w-3 rounded-full bg-red-500/5 opacity-0 blur-sm transition group-hover:opacity-100 group-focus-visible:opacity-100" />
+            <span className="relative h-1.5 w-1.5 rounded-full border border-red-400/25 bg-red-500/35 shadow-[0_0_5px_rgba(239,68,68,0.25)] transition duration-300 group-hover:border-red-300/80 group-hover:bg-red-400 group-hover:shadow-[0_0_10px_rgba(248,113,113,0.8)] group-focus-visible:bg-red-400" />
+          </Link>
+        </div>
       </div>
     </footer>
   );
