@@ -9,13 +9,13 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { parseRomCatalog, type RomCatalogEntry } from "../lib/rom-catalog";
+import { ROM_SYSTEMS, parseRomCatalog, type RomCatalogEntry } from "../lib/rom-catalog";
 
 export const Route = createFileRoute("/laboratorio-000")({ component: SecretGbaLab });
 
 const EMULATOR_DATA_URL = "https://cdn.emulatorjs.org/stable/data/";
 type Notice = { kind: "error" | "success" | "info"; text: string };
-type RomSession = { gameId: string; title: string; url: string };
+type RomSession = { gameId: string; title: string; url: string; core: string; systemLabel: string };
 
 declare global {
   interface Window {
@@ -70,10 +70,10 @@ function SecretGbaLab() {
   useEffect(() => {
     if (!session) return;
 
-    window.EJS_player = "#gba-emulator";
+    window.EJS_player = "#retro-emulator";
     window.EJS_gameName = session.title;
     window.EJS_gameUrl = session.url;
-    window.EJS_core = "gba";
+    window.EJS_core = session.core;
     window.EJS_pathtodata = EMULATOR_DATA_URL;
     window.EJS_startOnLoaded = true;
     window.EJS_language = "es";
@@ -91,7 +91,7 @@ function SecretGbaLab() {
     const script = document.createElement("script");
     script.src = `${EMULATOR_DATA_URL}loader.js`;
     script.async = true;
-    script.dataset.gbaEasterEgg = "true";
+    script.dataset.retroEasterEgg = "true";
     script.onerror = () => {
       setBusy(false);
       setNotice({
@@ -109,11 +109,14 @@ function SecretGbaLab() {
   }, [session]);
 
   function playCatalogRom(game: RomCatalogEntry) {
+    const system = ROM_SYSTEMS[game.system];
     setBusy(true);
     setSession({
       title: game.title,
-      gameId: `iek-gba-${game.id}`,
+      gameId: `iek-${game.system}-${game.id}`,
       url: game.rom,
+      core: system.core,
+      systemLabel: system.label,
     });
     setNotice({ kind: "info", text: `Cargando ${game.title}…` });
   }
@@ -140,7 +143,7 @@ function SecretGbaLab() {
           <div>
             <div className="mb-5">
               <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-5xl">
-                Módulo portátil <span className="text-blue-400">GBA</span>
+                Módulo <span className="text-blue-400">retro</span>
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
                 Un espacio para relajarte y despejarte entre clases.
@@ -187,7 +190,7 @@ function SecretGbaLab() {
                               {game.description}
                             </p>
                             <p className="mt-1 truncate text-[10px] uppercase tracking-wider text-slate-600">
-                              {game.author}
+                              {ROM_SYSTEMS[game.system].label} · {game.author}
                             </p>
                           </div>
                         </div>
@@ -227,7 +230,7 @@ function SecretGbaLab() {
                     {session?.title ?? "Esperando cartucho"}
                   </p>
                   <p className="mt-0.5 text-[10px] uppercase tracking-widest text-slate-500">
-                    {busy ? "Inicializando" : session ? "mGBA activo" : "Sin cartucho"}
+                    {busy ? "Inicializando" : session ? `${session.systemLabel} activo` : "Sin juego"}
                   </p>
                 </div>
                 {session && (
@@ -236,14 +239,14 @@ function SecretGbaLab() {
                     onClick={() => window.location.reload()}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-blue-400/30 hover:bg-blue-400/10 hover:text-white"
                   >
-                    <RotateCcw className="h-3.5 w-3.5" /> Cambiar cartucho
+                    <RotateCcw className="h-3.5 w-3.5" /> Cambiar juego
                   </button>
                 )}
               </div>
 
               <div className="relative min-h-[280px] overflow-hidden rounded-2xl border border-white/10 bg-black sm:min-h-[440px]">
                 {session ? (
-                  <div id="gba-emulator" className="h-full min-h-[280px] w-full sm:min-h-[440px]" />
+                  <div id="retro-emulator" className="h-full min-h-[280px] w-full sm:min-h-[440px]" />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center text-slate-300">
                     <Gamepad2 className="h-10 w-10 text-blue-400" />

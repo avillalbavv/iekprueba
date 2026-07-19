@@ -1,4 +1,4 @@
-# Catálogo de ROMs GBA
+# Catálogo de juegos retro
 
 Esta carpeta es para ROMs homebrew, de dominio público o con una licencia que permita expresamente su redistribución.
 
@@ -17,9 +17,12 @@ Esta carpeta es para ROMs homebrew, de dominio público o con una licencia que p
   "license": "Nombre exacto de la licencia",
   "licenseUrl": "https://sitio-del-autor.example/licencia",
   "sourceUrl": "https://sitio-oficial.example/mi-juego",
+  "system": "gba",
   "rom": "/roms/mi-juego.gba",
   "cover": "/roms/mi-juego.webp"
 }
 ```
 
-`cover` es opcional. No agregues ROMs comerciales, abandonware sin permiso explícito ni archivos cuya licencia no autorice redistribución.
+`cover` es opcional. Sistemas disponibles: `gba`, `gb`, `nes`, `snes`, `nds`, `n64`, `sega-md`, `sega-ms`, `sega-gg`, `psx` y `arcade`. La extensión del archivo debe corresponder al sistema elegido.
+
+No agregues ROMs comerciales, abandonware sin permiso explícito ni archivos cuya licencia no autorice redistribución.
