@@ -8,6 +8,7 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.nintendo.com",
       "sourceUrl": "https://www.pokemon.com",
+      "system": "gba",
       "rom": "/roms/pokemon-esmeralda.gba",
       "cover": "/roms/pokemon-esmeralda.webp"
     },
@@ -19,6 +20,7 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.nintendo.com",
       "sourceUrl": "https://www.nintendo.com/super-mario",
+      "system": "snes",
       "rom": "/roms/super-mario-world.sfc",
       "cover": "/roms/super-mario-world.webp"
     },
@@ -30,6 +32,7 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.nintendo.com",
       "sourceUrl": "https://www.pokemon.com",
+      "system": "gba",
       "rom": "/roms/pokemon-rojo-fuego.gba",
       "cover": "/roms/pokemon-rojo-fuego.webp"
     },
@@ -41,6 +44,7 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.nintendo.com",
       "sourceUrl": "https://www.zelda.com",
+      "system": "gba",
       "rom": "/roms/zelda-minish-cap.gba",
       "cover": "/roms/zelda-minish-cap.webp"
     },
@@ -52,8 +56,21 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.square-enix.com",
       "sourceUrl": "https://www.square-enix.com",
+      "system": "snes",
       "rom": "/roms/chrono-trigger.sfc",
       "cover": "/roms/chrono-trigger.webp"
+    },
+    {
+      "id": "sonic-the-hedgehog-2",
+      "title": "Sonic the Hedgehog 2",
+      "description": "Velocidad frenética en 16 bits que introdujo el icónico Spin Dash y al carismático Tails.",
+      "author": "Sega / Sonic Team",
+      "license": "Proprietary",
+      "licenseUrl": "https://www.sega.com",
+      "sourceUrl": "https://www.sonicthehedgehog.com",
+      "system": "md",
+      "rom": "/roms/sonic-2.md",
+      "cover": "/roms/sonic-2.webp"
     },
     {
       "id": "metroid-fusion",
@@ -63,6 +80,7 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.nintendo.com",
       "sourceUrl": "https://www.metroid.com",
+      "system": "gba",
       "rom": "/roms/metroid-fusion.gba",
       "cover": "/roms/metroid-fusion.webp"
     },
@@ -74,6 +92,7 @@
       "license": "Proprietary",
       "licenseUrl": "https://www.nintendo.com",
       "sourceUrl": "https://www.nintendo.com/super-mario",
+      "system": "nes",
       "rom": "/roms/super-mario-bros-3.nes",
       "cover": "/roms/super-mario-bros-3.webp"
     }
