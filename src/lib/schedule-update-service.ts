@@ -2,7 +2,7 @@ import { supabase } from "./supabase.ts";
 import { upsertNotification } from "./notification-service.ts";
 import { writeLocalState } from "./user-state.ts";
 import { DATA, replaceScheduleData, resetScheduleData, type Seccion } from "./poliplanner.ts";
-import { compareScheduleDatasets } from "./schedule-dataset-diff.ts";
+import { compareScheduleDatasets, mergeSchedulePlans } from "./schedule-dataset-diff.ts";
 
 export { compareScheduleDatasets } from "./schedule-dataset-diff.ts";
 
@@ -128,7 +128,10 @@ export async function publishScheduleRevision(
   const previousSections = Array.isArray(activeRevision?.sections)
     ? (activeRevision.sections as Seccion[])
     : DATA;
-  const delta = compareScheduleDatasets(previousSections, sections);
+  const delta = compareScheduleDatasets(
+    previousSections,
+    mergeSchedulePlans(previousSections, sections),
+  );
   if (!delta.affectsAll && delta.added + delta.changed + delta.removed === 0) {
     throw new Error("El archivo no contiene cambios respecto de la versión publicada.");
   }

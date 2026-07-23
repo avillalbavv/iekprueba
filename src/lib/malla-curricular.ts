@@ -1209,17 +1209,31 @@ export const MALLAS_ACADEMICAS = {
 
 export type MallaAcademicaId = keyof typeof MALLAS_ACADEMICAS;
 
+export const MALLA_LABEL: Record<MallaAcademicaId, string> = {
+  "plan-2008": "Malla 2008",
+  "vigente-2026": "Malla 2026",
+};
+
+export const PLAN_POR_MALLA: Record<MallaAcademicaId, string> = {
+  "plan-2008": "2008",
+  "vigente-2026": "2026",
+};
+
 /** Materias de Plan Básico (comunes a todos los énfasis) + las propias de un énfasis, ordenadas por semestre. */
-export function mallaPorEnfasis(enfasis: EnfasisId): MateriaMalla[] {
-  return MATERIAS_MALLA.filter(
-    (m) => m.enfasis.includes("comun") || m.enfasis.includes(enfasis),
-  ).sort((a, b) => a.semestre - b.semestre || a.nombre.localeCompare(b.nombre, "es"));
+export function mallaPorEnfasis(
+  enfasis: EnfasisId,
+  malla: MallaAcademicaId = "plan-2008",
+): MateriaMalla[] {
+  return MALLAS_ACADEMICAS[malla]
+    .filter((m) => m.enfasis.includes("comun") || m.enfasis.includes(enfasis))
+    .sort((a, b) => a.semestre - b.semestre || a.nombre.localeCompare(b.nombre, "es"));
 }
 
 export function mallaAgrupadaPorSemestre(
   enfasis: EnfasisId,
+  malla: MallaAcademicaId = "plan-2008",
 ): { semestre: number; materias: MateriaMalla[] }[] {
-  const materias = mallaPorEnfasis(enfasis);
+  const materias = mallaPorEnfasis(enfasis, malla);
   const map = new Map<number, MateriaMalla[]>();
   materias.forEach((m) => {
     if (!map.has(m.semestre)) map.set(m.semestre, []);

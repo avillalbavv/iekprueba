@@ -3,6 +3,9 @@ import { normalizeAcademicName } from "./search.ts";
 const IGNORED_TOKENS = new Set(["de", "del", "la", "las", "los", "y"]);
 const TOKEN_ALIASES: Record<string, string> = {
   proyectos: "proyecto",
+  i: "1",
+  ii: "2",
+  iii: "3",
 };
 
 function canonicalTokens(value: string): string[] {
@@ -33,5 +36,12 @@ export function academicNamesMatch(curriculumName: string, offeredName: string):
 
   const curriculumBase = canonical(withoutParenthetical(curriculumName));
   const offeredBase = canonical(withoutParenthetical(offeredName));
-  return Boolean(curriculumBase && curriculumBase === offeredBase);
+  if (curriculumBase && curriculumBase === offeredBase) return true;
+
+  // En el plan 2026, Optativa I y II aparecen en la malla como materias
+  // genéricas, mientras que la oferta enumera cada alternativa concreta.
+  if (/^optativa (1|2|3)$/u.test(curriculumBase)) {
+    return offeredBase.startsWith(`${curriculumBase} `);
+  }
+  return false;
 }

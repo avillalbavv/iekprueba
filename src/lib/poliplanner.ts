@@ -21,6 +21,7 @@ export interface ClaseInfo {
   hora: string; // "HH:MM - HH:MM"
   aula: string | null;
   fechas?: string[]; // Fechas ISO cuando la fuente limita una clase a días concretos.
+  tipo?: "teoria" | "laboratorio";
 }
 
 export interface ExamenInfo {
@@ -44,6 +45,11 @@ export interface Seccion {
   semGrupo: string | number;
   enfasis: string;
   docente: Docente;
+  docenteEsPlantel?: boolean;
+  laboratorio?: {
+    grupo: string;
+    docente: string;
+  };
   clases: ClaseInfo[];
   examenes: Partial<
     Record<"parcial1" | "parcial2" | "final1" | "revision1" | "final2" | "revision2", ExamenInfo>
@@ -72,7 +78,11 @@ export const DATA: Seccion[] = [...BUNDLED_DATA];
 export function replaceScheduleData(source: Seccion[]): void {
   const normalized = normalizeScheduleData(source);
   if (!normalized.length) throw new Error("La actualización no contiene secciones válidas");
-  DATA.splice(0, DATA.length, ...normalized);
+  const importedPlans = new Set(normalized.map((section) => section.plan));
+  const bundledPlansNotReplaced = BUNDLED_DATA.filter(
+    (section) => !importedPlans.has(section.plan),
+  );
+  DATA.splice(0, DATA.length, ...bundledPlansNotReplaced, ...normalized);
   nombreOfertadoCache.clear();
   seccionesPorMateriaCache.clear();
   seccionesCursablesCache.clear();
@@ -358,24 +368,32 @@ export function findExamConflicts(examenes: ExamEntry[]): ExamConflict[] {
 const STORAGE_KEY = "poliplanner:seleccion:v2";
 
 export interface PlannerSelection {
+  malla: "plan-2008" | "vigente-2026";
   enfasis: string | null;
   materiaIds: string[];
   secciones: Record<string, string>; // materiaId de la malla -> seccion.id ofertada
 }
 
 export function loadSelection(): PlannerSelection {
-  if (typeof window === "undefined") return { enfasis: null, materiaIds: [], secciones: {} };
+  const empty: PlannerSelection = {
+    malla: "plan-2008",
+    enfasis: null,
+    materiaIds: [],
+    secciones: {},
+  };
+  if (typeof window === "undefined") return empty;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { enfasis: null, materiaIds: [], secciones: {} };
+    if (!raw) return empty;
     const parsed = JSON.parse(raw);
     return {
+      malla: parsed.malla === "vigente-2026" ? "vigente-2026" : "plan-2008",
       enfasis: typeof parsed.enfasis === "string" ? parsed.enfasis : null,
       materiaIds: Array.isArray(parsed.materiaIds) ? parsed.materiaIds : [],
       secciones: typeof parsed.secciones === "object" && parsed.secciones ? parsed.secciones : {},
     };
   } catch {
-    return { enfasis: null, materiaIds: [], secciones: {} };
+    return empty;
   }
 }
 
@@ -479,5 +497,7 @@ export function resumenHorario(s: Seccion): string {
     Viernes: "Vi",
     Sábado: "Sa",
   };
-  return s.clases.map((c) => `${abbr[c.dia] ?? c.dia} ${c.hora}`).join(" · ");
+  return s.clases
+    .map((c) => `${c.tipo === "laboratorio" ? "Lab " : ""}${abbr[c.dia] ?? c.dia} ${c.hora}`)
+    .join(" · ");
 }

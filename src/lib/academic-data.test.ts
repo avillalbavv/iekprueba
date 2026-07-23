@@ -17,8 +17,8 @@ const rows = JSON.parse(
   readFileSync(new URL("../data/poliplanner-horario-2026.json", import.meta.url), "utf8"),
 ) as AcademicRow[];
 
-test("la importación conserva 206 filas con identificadores únicos", () => {
-  assert.equal(rows.length, 206);
+test("la importación conserva 217 filas con identificadores únicos", () => {
+  assert.equal(rows.length, 217);
   assert.equal(new Set(rows.map((row) => row.id)).size, rows.length);
 });
 
@@ -50,7 +50,7 @@ test("los semestres académicos corregidos están en la fuente central", () => {
 });
 
 test("los planes del Excel no se reemplazan por un valor fijo", () => {
-  assert.deepEqual([...new Set(rows.map((row) => row.plan))].sort(), ["2008", "2013"]);
+  assert.deepEqual([...new Set(rows.map((row) => row.plan))].sort(), ["2008", "2013", "2026"]);
   const calculoTres = rows.filter((row) => row.materia === "Cálculo III");
   assert.deepEqual([...new Set(calculoTres.map((row) => row.plan))].sort(), ["2008", "2013"]);
 });
@@ -67,6 +67,23 @@ test("la identidad académica compuesta no contiene duplicados", () => {
     ].join("::"),
   );
   assert.equal(new Set(identities).size, identities.length);
+});
+
+test("la malla 2026 conserva parciales, finales y los dos grupos de laboratorio", () => {
+  const plan2026 = rows.filter((row) => row.plan === "2026");
+  assert.equal(plan2026.length, 11);
+  const mechanics = plan2026.filter((row) => row.materia === "Fundamentos de Mecánica");
+  assert.deepEqual(mechanics.map((row) => row.seccion).sort(), ["X · T1", "X · T2"]);
+  const raw = mechanics as unknown as {
+    clases: { dia: string; hora: string; tipo?: string }[];
+    examenes: { parcial1?: { dia: string }; final1?: { dia: string } };
+  }[];
+  assert.deepEqual(
+    raw.map((row) => row.clases.find((clase) => clase.tipo === "laboratorio")?.dia).sort(),
+    ["Miércoles", "Viernes"],
+  );
+  assert.equal(raw[0].examenes.parcial1?.dia, "Mie 09/09/26");
+  assert.equal(raw[0].examenes.final1?.dia, "Lun 30/11/26");
 });
 
 test("la delegación mantiene cargos y orden por apellido", () => {

@@ -46,8 +46,11 @@ import {
 } from "@/components/ui/accordion";
 import {
   ENFASIS_OPTIONS,
+  MALLA_LABEL,
+  PLAN_POR_MALLA,
   mallaAgrupadaPorSemestre,
   type EnfasisId,
+  type MallaAcademicaId,
   type MateriaMalla,
 } from "@/lib/malla-curricular";
 import {
@@ -68,6 +71,7 @@ import {
   loadSelection,
   saveSelection,
   docenteNombre,
+  nombreMateriaVisible,
   resumenHorario,
   TURNO_LABEL,
   TURNO_COLOR,
@@ -82,11 +86,13 @@ export const Route = createFileRoute("/poliplanner")({ component: PoliPlannerPag
 const STORAGE_KEY_ENFASIS = "iek-mapa-enfasis-seleccionado";
 
 function plannerSignature(
+  malla: MallaAcademicaId,
   enfasis: string | null,
   materiaIds: string[],
   sections: Record<string, string>,
 ): string {
   return JSON.stringify({
+    malla,
     enfasis,
     materiaIds: [...materiaIds].sort(),
     sections: Object.entries(sections).sort(([a], [b]) => a.localeCompare(b)),
@@ -108,6 +114,7 @@ const EXAM_GROUPS: {
 
 function PoliPlannerPage() {
   const [hydrated, setHydrated] = useState(false);
+  const [mallaVersion, setMallaVersion] = useState<MallaAcademicaId>("plan-2008");
   const [enfasis, setEnfasis] = useState<EnfasisId | null>(null);
   const [materiaIds, setMateriaIds] = useState<string[]>([]);
   const [choice, setChoice] = useState<Record<string, string>>({}); // materiaId malla -> seccion.id
@@ -122,6 +129,7 @@ function PoliPlannerPage() {
 
   useEffect(() => {
     const sel = loadSelection();
+    setMallaVersion(sel.malla);
     const enfasisGuardado = (sel.enfasis ||
       window.localStorage.getItem(STORAGE_KEY_ENFASIS)) as EnfasisId | null;
     if (enfasisGuardado) setEnfasis(enfasisGuardado);
@@ -129,7 +137,9 @@ function PoliPlannerPage() {
       setMateriaIds(sel.materiaIds);
       setChoice(sel.secciones);
       setOpenSemestres([]);
-      setConfirmedSignature(plannerSignature(enfasisGuardado, sel.materiaIds, sel.secciones));
+      setConfirmedSignature(
+        plannerSignature(sel.malla, enfasisGuardado, sel.materiaIds, sel.secciones),
+      );
     }
     setHydrated(true);
   }, []);
@@ -145,7 +155,11 @@ function PoliPlannerPage() {
     }
   }, [enfasis, hydrated]);
 
-  const malla = useMemo(() => (enfasis ? mallaAgrupadaPorSemestre(enfasis) : []), [enfasis]);
+  const schedulePlan = PLAN_POR_MALLA[mallaVersion];
+  const malla = useMemo(
+    () => (enfasis ? mallaAgrupadaPorSemestre(enfasis, mallaVersion) : []),
+    [enfasis, mallaVersion],
+  );
   const materiasDisponibles = useMemo(() => malla.flatMap((group) => group.materias), [malla]);
   const mallaById = useMemo(
     () => new Map(malla.flatMap((g) => g.materias).map((m) => [m.id, m])),
@@ -168,7 +182,9 @@ function PoliPlannerPage() {
       if (
         materia &&
         selectedSection &&
-        seccionesCursablesPorMateriaMalla(materia.nombre).some((s) => s.id === selectedSection)
+        seccionesCursablesPorMateriaMalla(materia.nombre, schedulePlan).some(
+          (s) => s.id === selectedSection,
+        )
       ) {
         cleanChoice[id] = selectedSection;
       }
@@ -182,7 +198,16 @@ function PoliPlannerPage() {
     const currentEntries = Object.entries(choice).sort(([a], [b]) => a.localeCompare(b));
     const cleanEntries = Object.entries(cleanChoice).sort(([a], [b]) => a.localeCompare(b));
     if (JSON.stringify(currentEntries) !== JSON.stringify(cleanEntries)) setChoice(cleanChoice);
-  }, [hydrated, enfasis, mallaById, materiaIds, choice]);
+  }, [hydrated, enfasis, mallaById, materiaIds, choice, schedulePlan]);
+
+  function elegirMalla(id: MallaAcademicaId) {
+    if (id === mallaVersion) return;
+    setMallaVersion(id);
+    setMateriaIds([]);
+    setChoice({});
+    setOpenSemestres(["1"]);
+    setConfirmedSignature("");
+  }
 
   function elegirEnfasis(id: EnfasisId) {
     setEnfasis(id);
@@ -213,7 +238,7 @@ function PoliPlannerPage() {
       return;
     setMateriaIds([]);
     setChoice({});
-    saveSelection({ enfasis, materiaIds: [], secciones: {} });
+    saveSelection({ malla: mallaVersion, enfasis, materiaIds: [], secciones: {} });
     setConfirmedSignature("");
   }
 
@@ -271,9 +296,9 @@ function PoliPlannerPage() {
 
   function confirmarHorario() {
     if (!enfasis || !materiaIds.length || pendientes > 0 || conflicts.length > 0) return;
-    const selection = { enfasis, materiaIds, secciones: choice };
+    const selection = { malla: mallaVersion, enfasis, materiaIds, secciones: choice };
     saveSelection(selection);
-    setConfirmedSignature(plannerSignature(enfasis, materiaIds, choice));
+    setConfirmedSignature(plannerSignature(mallaVersion, enfasis, materiaIds, choice));
     setSyncMsg(
       `Horario confirmado. ${importarHorarioEnAsistencia()} También está disponible para ¿Dónde rindo?, el calendario y la sincronización.`,
     );
@@ -288,17 +313,17 @@ function PoliPlannerPage() {
       .map((id) => {
         const m = mallaById.get(id);
         if (!m) return null;
-        const ofertadas = seccionesCursablesPorMateriaMalla(m.nombre);
+        const ofertadas = seccionesCursablesPorMateriaMalla(m.nombre, schedulePlan);
         return ofertadas.find((s) => s.id === choice[id]) ?? null;
       })
       .filter((s): s is Seccion => Boolean(s));
-  }, [materiaIds, choice, mallaById]);
+  }, [materiaIds, choice, mallaById, schedulePlan]);
 
   const conflicts = useMemo(() => findScheduleConflicts(chosenSecciones), [chosenSecciones]);
   const examenes = useMemo(() => listExamenes(chosenSecciones), [chosenSecciones]);
   const examConflicts = useMemo(() => findExamConflicts(examenes), [examenes]);
   const pendientes = materiaIds.filter((id) => !choice[id]).length;
-  const currentSignature = plannerSignature(enfasis, materiaIds, choice);
+  const currentSignature = plannerSignature(mallaVersion, enfasis, materiaIds, choice);
   const horarioConfirmado = Boolean(confirmedSignature && confirmedSignature === currentSignature);
 
   useEffect(() => {
@@ -325,11 +350,12 @@ function PoliPlannerPage() {
               Planificador <span className="text-gradient">IEK</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Elegí tu énfasis, marcá las materias que vas a cursar y armá tu horario semanal
-              automáticamente — con detección de choques y calendario de exámenes incluido.
+              Elegí tu malla y énfasis, marcá las materias que vas a cursar y armá tu horario
+              semanal automáticamente — con detección de choques, laboratorios y exámenes.
             </p>
             <p className="mt-2 text-xs text-muted-foreground/75">
-              Datos de horarios y exámenes: Primer Periodo 2026 · actualización 06/07/2026.
+              Segundo Periodo 2026 · clases y exámenes actualizados al 22/07/2026 · laboratorios al
+              21/07/2026.
             </p>
           </div>
         </Reveal>
@@ -378,7 +404,12 @@ function PoliPlannerPage() {
           </div>
         </Reveal>
 
-        {/* ── PASO 2: ÉNFASIS ── */}
+        {/* ── PASO 2: MALLA ── */}
+        <Reveal className="pp-no-print">
+          <MallaPicker selected={mallaVersion} onSelect={elegirMalla} />
+        </Reveal>
+
+        {/* ── PASO 3: ÉNFASIS ── */}
         <Reveal className="pp-no-print">
           <EnfasisPicker enfasis={enfasis} onElegir={elegirEnfasis} />
         </Reveal>
@@ -388,7 +419,7 @@ function PoliPlannerPage() {
             <div className="pp-panel mt-6 rounded-3xl px-6 py-16 text-center">
               <GraduationCap className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
               <p className="text-base font-medium text-foreground">
-                Elegí tu énfasis para ver la malla completa
+                Elegí tu énfasis para ver la {MALLA_LABEL[mallaVersion].toLowerCase()}
               </p>
               <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                 Vas a ver todas las materias desde primer hasta último semestre — Ciencias Básicas,
@@ -400,6 +431,8 @@ function PoliPlannerPage() {
           <SemesterGeneratorPanel
             materias={materiasDisponibles}
             selectedIds={materiaIds}
+            plan={schedulePlan}
+            mallaVersion={mallaVersion}
             onApply={(ids, sections) => {
               setMateriaIds(ids);
               setChoice(sections);
@@ -480,12 +513,12 @@ function PoliPlannerPage() {
               )}
             </Reveal>
 
-            {/* ── PASO 3: MALLA CURRICULAR COMPLETA ── */}
+            {/* ── PASO 4: MALLA CURRICULAR COMPLETA ── */}
             <Reveal className="pp-no-print">
               <div className="mb-8">
                 <div className="mb-3 flex items-center gap-3">
                   <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-md bg-primary/15 text-[11px] font-bold text-primary">
-                    3
+                    4
                   </span>
                   <h2 className="font-display text-sm font-semibold text-foreground">
                     Malla curricular completa
@@ -526,6 +559,7 @@ function PoliPlannerPage() {
                               <MateriaChip
                                 key={m.id}
                                 materia={m}
+                                plan={schedulePlan}
                                 checked={materiaIds.includes(m.id)}
                                 onToggle={() => toggleMateria(m.id)}
                               />
@@ -539,16 +573,18 @@ function PoliPlannerPage() {
               </div>
             </Reveal>
 
-            {/* ── PASO 4: SECCIÓN / DOCENTE / HORARIO / AULA ── */}
+            {/* ── PASO 5: SECCIÓN / DOCENTE / HORARIO / AULA ── */}
             {materiaIds.length > 0 && (
               <Reveal className="pp-no-print">
                 <div className="mb-10">
                   <div className="mb-3 flex items-center gap-3">
                     <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-md bg-primary/15 text-[11px] font-bold text-primary">
-                      4
+                      5
                     </span>
                     <h2 className="font-display text-sm font-semibold text-foreground">
-                      Elegí sección y docente
+                      {mallaVersion === "vigente-2026"
+                        ? "Revisá la opción, el horario y el plantel docente"
+                        : "Elegí sección y docente"}
                     </h2>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -559,6 +595,8 @@ function PoliPlannerPage() {
                         <SectionCard
                           key={id}
                           materia={m}
+                          plan={schedulePlan}
+                          isPlan2026={mallaVersion === "vigente-2026"}
                           chosenId={choice[id]}
                           onChoose={(secId) => chooseSection(id, secId)}
                           onRemove={() => removeMateria(id)}
@@ -572,7 +610,7 @@ function PoliPlannerPage() {
               </Reveal>
             )}
 
-            {/* ── PASO 5: HORARIO / EXÁMENES ── */}
+            {/* ── PASO 6: HORARIO / EXÁMENES ── */}
             {chosenSecciones.length === 0 ? (
               <EmptyState />
             ) : (
@@ -717,7 +755,62 @@ function PoliPlannerPage() {
   );
 }
 
-/* ═══════════════════════════════ Paso 2: Énfasis ═══════════════════════════════ */
+/* ═══════════════════════════════ Paso 2: Malla ═══════════════════════════════ */
+
+function MallaPicker({
+  selected,
+  onSelect,
+}: {
+  selected: MallaAcademicaId;
+  onSelect: (id: MallaAcademicaId) => void;
+}) {
+  return (
+    <div className="mb-5">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-md bg-primary/15 text-[11px] font-bold text-primary">
+          2
+        </span>
+        <div>
+          <h2 className="font-display text-sm font-semibold text-foreground">
+            Elegí tu malla curricular
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Cada malla usa únicamente sus propias materias, secciones y horarios.
+          </p>
+        </div>
+      </div>
+      <div className="pp-panel grid gap-2 rounded-2xl p-2 sm:grid-cols-2">
+        {(
+          [
+            ["plan-2008", "Malla 2008", "Plan anterior y sus secciones docentes"],
+            [
+              "vigente-2026",
+              "Malla 2026",
+              "Ingresantes 2026 · sección única y laboratorios por grupo",
+            ],
+          ] as const
+        ).map(([id, label, detail]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onSelect(id)}
+            aria-pressed={selected === id}
+            className={`rounded-xl border px-4 py-3 text-left transition ${
+              selected === id
+                ? "border-primary/50 bg-primary/10"
+                : "border-transparent hover:border-border hover:bg-foreground/5"
+            }`}
+          >
+            <span className="block text-sm font-semibold text-foreground">{label}</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">{detail}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════ Paso 3: Énfasis ═══════════════════════════════ */
 
 function EnfasisPicker({
   enfasis,
@@ -732,7 +825,7 @@ function EnfasisPicker({
     return (
       <div className="pp-panel flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3">
         <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
-          2
+          3
         </span>
         <div
           className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg"
@@ -763,7 +856,7 @@ function EnfasisPicker({
     <div>
       <div className="mb-3 flex items-center gap-3">
         <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-md bg-primary/15 text-[11px] font-bold text-primary">
-          2
+          3
         </span>
         <h2 className="font-display text-sm font-semibold text-foreground">Elegí tu énfasis</h2>
       </div>
@@ -793,20 +886,22 @@ function EnfasisPicker({
 
 function MateriaChip({
   materia,
+  plan,
   checked,
   onToggle,
 }: {
   materia: MateriaMalla;
+  plan: string;
   checked: boolean;
   onToggle: () => void;
 }) {
   const ofertada = useMemo(
-    () => seccionesCursablesPorMateriaMalla(materia.nombre).length > 0,
-    [materia.nombre],
+    () => seccionesCursablesPorMateriaMalla(materia.nombre, plan).length > 0,
+    [materia.nombre, plan],
   );
   const departamentos = useMemo(
-    () => departamentosPorMateriaMalla(materia.nombre),
-    [materia.nombre],
+    () => departamentosPorMateriaMalla(materia.nombre, plan),
+    [materia.nombre, plan],
   );
 
   return (
@@ -845,6 +940,8 @@ function MateriaChip({
 
 function SectionCard({
   materia,
+  plan,
+  isPlan2026,
   chosenId,
   onChoose,
   onRemove,
@@ -852,6 +949,8 @@ function SectionCard({
   conflicts,
 }: {
   materia: MateriaMalla;
+  plan: string;
+  isPlan2026: boolean;
   chosenId: string | undefined;
   onChoose: (id: string) => void;
   onRemove: () => void;
@@ -861,8 +960,8 @@ function SectionCard({
   const [search, setSearch] = useState("");
   const color = colorForMateria(materia.nombre);
   const secciones = useMemo(
-    () => seccionesCursablesPorMateriaMalla(materia.nombre),
-    [materia.nombre],
+    () => seccionesCursablesPorMateriaMalla(materia.nombre, plan),
+    [materia.nombre, plan],
   );
 
   const filtered = useMemo(() => {
@@ -896,7 +995,8 @@ function SectionCard({
             </h3>
           </div>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Sem. {materia.semestre} · {secciones.length} sección{secciones.length === 1 ? "" : "es"}
+            Sem. {materia.semestre} · {secciones.length} {isPlan2026 ? "opción" : "sección"}
+            {secciones.length === 1 ? "" : "es"}
           </p>
         </div>
         <button
@@ -937,7 +1037,13 @@ function SectionCard({
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-foreground">Sección {s.seccion}</span>
+                <span className="font-medium text-foreground">
+                  {s.laboratorio
+                    ? `Grupo de laboratorio ${s.laboratorio.grupo}`
+                    : isPlan2026 && secciones.length === 1
+                      ? "Sección única"
+                      : `Sección ${s.seccion}`}
+                </span>
                 <span className="flex items-center gap-1.5">
                   {s.turno && (
                     <span
@@ -956,10 +1062,21 @@ function SectionCard({
               </div>
               {/* Docente → Horario → Aula, en filas claras */}
               <div className="mt-1.5 grid gap-0.5 text-muted-foreground">
-                <p className="truncate">
-                  <span className="text-muted-foreground/60">Docente: </span>
+                {s.materia !== materia.nombre && (
+                  <p className="font-medium text-foreground">{nombreMateriaVisible(s.materia)}</p>
+                )}
+                <p className="line-clamp-2" title={docenteNombre(s.docente)}>
+                  <span className="text-muted-foreground/60">
+                    {s.docenteEsPlantel ? "Plantel informado: " : "Docente: "}
+                  </span>
                   {docenteNombre(s.docente)}
                 </p>
+                {s.laboratorio && (
+                  <p>
+                    <span className="text-muted-foreground/60">Laboratorio: </span>
+                    {s.laboratorio.docente || "Docente a confirmar"}
+                  </p>
+                )}
                 <p className="truncate">
                   <span className="text-muted-foreground/60">Horario: </span>
                   {resumenHorario(s)}
@@ -1024,8 +1141,8 @@ function EmptyState() {
           Todavía no armaste tu horario
         </h3>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-          Elegí sección y docente para las materias marcadas más arriba. El horario y el calendario
-          de exámenes se generan automáticamente.
+          Elegí una opción para las materias marcadas más arriba. El horario y el calendario de
+          exámenes se generan automáticamente.
         </p>
       </div>
     </Reveal>
@@ -1172,7 +1289,7 @@ function WeeklyCalendar({
                     return (
                       <div
                         key={s.id + idx}
-                        title={`${s.materia} · Sección ${s.seccion} · ${docenteNombre(s.docente)} · ${c.hora}${c.aula ? " · " + c.aula : ""}`}
+                        title={`${s.materia} · ${c.tipo === "laboratorio" ? `Laboratorio ${s.laboratorio?.grupo || ""}` : `Sección ${s.seccion}`} · ${docenteNombre(s.docente)} · ${c.hora}${c.aula ? " · " + c.aula : ""}`}
                         className={`pp-block absolute overflow-hidden rounded-md p-2 text-[10px] leading-tight ${isConflict ? "conflict-pulse ring-2 ring-red-400" : ""}`}
                         style={{
                           top,
@@ -1196,14 +1313,22 @@ function WeeklyCalendar({
                           style={{ color }}
                         >
                           {s.materia}
+                          {c.tipo === "laboratorio" && (
+                            <span className="ml-1 rounded bg-primary/15 px-1 py-0.5 text-[8px] uppercase tracking-wide text-primary">
+                              Laboratorio
+                            </span>
+                          )}
                         </p>
                         <p className="mt-1 flex items-center gap-1 font-semibold tabular-nums text-foreground/80">
                           <Clock3 className="h-3 w-3 shrink-0" /> {c.hora}
                         </p>
                         {height > 66 && (
                           <p className="mt-1 flex items-center gap-1 truncate text-foreground/65">
-                            <MapPin className="h-3 w-3 shrink-0" /> Sección {s.seccion} ·{" "}
-                            {c.aula || "Aula pendiente"}
+                            <MapPin className="h-3 w-3 shrink-0" />{" "}
+                            {c.tipo === "laboratorio"
+                              ? `Grupo ${s.laboratorio?.grupo || s.seccion}`
+                              : `Sección ${s.seccion}`}{" "}
+                            · {c.aula || "Aula pendiente"}
                           </p>
                         )}
                         {height > 92 && (
@@ -1260,10 +1385,18 @@ function ScheduleList({
       materia: string;
       seccion: Seccion;
       aula: string | null;
+      tipo?: "teoria" | "laboratorio";
     }[] = [];
     secciones.forEach((s) =>
       s.clases.forEach((c) =>
-        out.push({ dia: c.dia as Dia, hora: c.hora, materia: s.materia, seccion: s, aula: c.aula }),
+        out.push({
+          dia: c.dia as Dia,
+          hora: c.hora,
+          materia: s.materia,
+          seccion: s,
+          aula: c.aula,
+          tipo: c.tipo,
+        }),
       ),
     );
     return out.sort(
@@ -1319,10 +1452,19 @@ function ScheduleList({
                         style={{ background: colorForMateria(r.materia) }}
                       />
                       {r.materia}
+                      {r.tipo === "laboratorio" && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          Laboratorio
+                        </span>
+                      )}
                       {isConflict && <AlertTriangle className="h-3.5 w-3.5 text-red-500" />}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{r.seccion.seccion}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {r.tipo === "laboratorio"
+                      ? r.seccion.laboratorio?.grupo || r.seccion.seccion
+                      : r.seccion.seccion}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {docenteNombre(r.seccion.docente)}
                   </td>
