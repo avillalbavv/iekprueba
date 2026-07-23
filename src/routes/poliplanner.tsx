@@ -1744,14 +1744,13 @@ function ExamSection({
         {conflicts.length > 0 && (
           <div className="pp-no-print rounded-2xl border border-red-400/30 bg-red-400/5 p-4">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-red-500">
-              <AlertTriangle className="h-4 w-4" /> Posible conflicto de exámenes ·{" "}
-              {conflicts.length} fecha
-              {conflicts.length === 1 ? "" : "s"} para revisar
+              <AlertTriangle className="h-4 w-4" /> Conflicto de exámenes · {conflicts.length}{" "}
+              coincidencia
+              {conflicts.length === 1 ? "" : "s"} de fecha y hora
             </div>
             <p className="mb-2 text-xs text-red-500/90">
-              El reglamento tampoco permite solapamientos entre evaluaciones. Estas materias
-              comparten fecha; revisá sus horas porque la planificación no informa la duración de
-              cada examen y los parciales pueden aparecer sin horario.
+              La alarma aparece únicamente cuando dos materias tienen examen en la misma fecha y a
+              la misma hora.
             </p>
             <ul className="space-y-1 text-xs text-red-500/90">
               {conflicts.map((c, i) => (
@@ -1761,14 +1760,10 @@ function ExamSection({
                     day: "2-digit",
                     month: "2-digit",
                   })}
-                  :{" "}
+                  {" · "}
+                  {c.hora}:{" "}
                   {c.entries
-                    .map(
-                      (e) =>
-                        `${e.seccion.materia} (${examenLabel(e.tipo)}, ${
-                          e.info.hora || "hora no informada"
-                        })`,
-                    )
+                    .map((e) => `${e.seccion.materia} (${examenLabel(e.tipo)})`)
                     .join(" y ")}
                   .
                 </li>

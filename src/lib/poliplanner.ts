@@ -352,29 +352,32 @@ export function listExamenes(
 
 export interface ExamConflict {
   fecha: Date;
+  hora: string;
   entries: ExamEntry[];
 }
 
-/**
- * Agrupa exámenes de materias distintas que comparten fecha. La planificación
- * oficial no informa duración y los parciales no incluyen hora, por lo que el
- * resultado es una advertencia preventiva, no una afirmación de solapamiento.
- */
+/** Agrupa únicamente exámenes de materias distintas con la misma fecha y hora. */
 export function findExamConflicts(examenes: ExamEntry[]): ExamConflict[] {
-  const byDate = new Map<string, ExamEntry[]>();
+  const byDateAndTime = new Map<string, { hora: string; entries: ExamEntry[] }>();
   for (const e of examenes) {
-    const key = e.fecha.toDateString();
-    if (!byDate.has(key)) byDate.set(key, []);
-    byDate.get(key)!.push(e);
+    const match = (e.info.hora || "").match(/(\d{1,2}):(\d{2})/);
+    if (!match) continue;
+    const hora = `${match[1].padStart(2, "0")}:${match[2]}`;
+    const key = `${e.fecha.toDateString()}::${hora}`;
+    const group = byDateAndTime.get(key) ?? { hora, entries: [] };
+    group.entries.push(e);
+    byDateAndTime.set(key, group);
   }
   const conflicts: ExamConflict[] = [];
-  for (const [, entries] of byDate) {
+  for (const { hora, entries } of byDateAndTime.values()) {
     const materiasUnicas = new Set(entries.map((e) => e.seccion.materiaId));
     if (materiasUnicas.size > 1) {
-      conflicts.push({ fecha: entries[0].fecha, entries });
+      conflicts.push({ fecha: entries[0].fecha, hora, entries });
     }
   }
-  return conflicts.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+  return conflicts.sort(
+    (a, b) => a.fecha.getTime() - b.fecha.getTime() || a.hora.localeCompare(b.hora),
+  );
 }
 
 /* ───────────────────────── Persistencia local ───────────────────────── */
