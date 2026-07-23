@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import ExcelJS from "exceljs";
-import { analyzeScheduleFile, parseScheduleRows } from "./schedule-import-parser.ts";
+import {
+  analyzeScheduleFile,
+  mergeLaboratoryGroups,
+  parseLaboratoryRows,
+  parseScheduleRows,
+} from "./schedule-import-parser.ts";
 
 test("procesa una planilla académica y conserva departamento, clases y examen", () => {
   const sections = parseScheduleRows([
@@ -193,4 +198,129 @@ test("selecciona exclusivamente la hoja IEK del libro oficial", async () => {
   assert.equal(result.totalSections, 2);
   assert.equal(result.offeredSections, 1);
   assert.equal(result.examOnlySections, 1);
+});
+
+test("interpreta el formato 2026 y enlaza el plantel de la hoja Docentes", async () => {
+  const workbook = new ExcelJS.Workbook();
+  const schedule = workbook.addWorksheet("IEK");
+  schedule.addRows([
+    [
+      "",
+      "ASIGNATURA",
+      "ASIGNATURA",
+      "ASIGNATURA",
+      "ASIGNATURA",
+      "CARRERA",
+      "CARRERA",
+      "",
+      "",
+      "Evaluación primera etapa",
+      "Evaluación segunda etapa",
+      "1er. Final",
+      "1er. Final",
+      "1er. Final",
+      "",
+      "",
+    ],
+    [
+      "Item",
+      "DPTO.",
+      "Asignatura",
+      "Nivel",
+      "Sem/Grupo",
+      "Sigla carrera",
+      "Plan",
+      "Turno",
+      "Sección",
+      "Día",
+      "Día",
+      "Día",
+      "Hora",
+      "AULA",
+      "AULA",
+      "Lunes",
+    ],
+    [
+      1,
+      "DCB",
+      "Fundamentos de Mecánica (**)",
+      1,
+      1,
+      "IEK",
+      2026,
+      "M",
+      "X",
+      "Mie 09/09/26",
+      "Mie 04/11/26",
+      "Lun 30/11/26",
+      "08:00",
+      "",
+      "",
+      "09:45 - 11:45",
+    ],
+  ]);
+  const teachers = workbook.addWorksheet("Docentes");
+  teachers.addRows([
+    ["Sede", "Dpto", "Asignatura", "Carrera", "Plan", "Turno", "Docente"],
+    [
+      "San Lorenzo",
+      "DCB",
+      "Fundamentos de Mecánica",
+      "IEK",
+      2026,
+      "M",
+      "A CONFIRMAR A CONFIRMAR - Crispín Vargas - Juan Fatecha",
+    ],
+  ]);
+  const bytes = await workbook.xlsx.writeBuffer();
+  const result = await analyzeScheduleFile(
+    new File([bytes], "horario-2026.xlsx", {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+  );
+
+  assert.equal(result.totalSections, 1);
+  assert.equal(result.sections[0].plan, "2026");
+  assert.equal(result.sections[0].docenteEsPlantel, true);
+  assert.equal(result.sections[0].docente.nombre, "Crispín Vargas · Juan Fatecha");
+  assert.equal(result.sections[0].examenes.parcial1?.dia, "Mie 09/09/26");
+  assert.equal(result.sections[0].examenes.parcial2?.dia, "Mie 04/11/26");
+});
+
+test("integra los grupos T1 y T2 sin duplicar filas del laboratorio", () => {
+  const header = Array(66).fill("");
+  const first = Array(66).fill("");
+  const duplicate = Array(66).fill("");
+  header[1] = "Asignatura";
+  header[14] = "Carrera";
+  header[16] = "Plan";
+  header[20] = "Turno";
+  header[38] = "PROF. DE LABORATORIO";
+  header[55] = "Lunes";
+  header[59] = "Miércoles";
+  header[63] = "Viernes";
+  for (const row of [first, duplicate]) {
+    row[1] = "Fundamentos de Mecánica";
+    row[14] = "IEK";
+    row[16] = "2026";
+    row[20] = "M";
+    row[38] = "A CONFIRMAR";
+    row[59] = "13:30 - 17:45 (T1)";
+    row[63] = "13:30 - 17:45 (T2)";
+  }
+  const groups = parseLaboratoryRows([header, first, duplicate]);
+  assert.equal(groups.length, 2);
+
+  const base = parseScheduleRows([
+    ["Materia", "Sección", "Turno", "Plan", "Sigla carrera", "Lunes"],
+    ["Fundamentos de Mecánica (**)", "X", "M", "2026", "IEK", "09:45 - 11:45"],
+  ]);
+  const merged = mergeLaboratoryGroups(base, groups);
+  assert.deepEqual(merged.map((section) => section.laboratorio?.grupo).sort(), ["T1", "T2"]);
+  assert.equal(
+    merged.every(
+      (section) => section.clases.filter((clase) => clase.tipo === "laboratorio").length === 1,
+    ),
+    true,
+  );
 });

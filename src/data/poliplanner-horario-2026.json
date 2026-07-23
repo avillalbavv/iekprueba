@@ -12739,5 +12739,666 @@
       "miembro1": "Lic. Carmen María Rivas Escobar",
       "miembro2": "Dr. José Luis Vázquez Noguera"
     }
+  },
+  {
+    "id": "iek-2026-12",
+    "sourceRow": 12,
+    "departamento": "DCB",
+    "materia": "Cálculo de una variable",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Silvia Verónica Chamorro Hermosa · Ms. Carmen Antonia Lugo de Acosta · Ms. Cristhian José Martínez Leguizamón · Ms. Osvaldo Ramón Vega Gamarra · Ms. Pedro Alberto Villalba Sosa",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Lunes",
+        "hora": "07:30 - 09:30",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Miércoles",
+        "hora": "07:30 - 09:30",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Lun 07/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Lun 02/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Lun 23/11/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Lun 14/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-13",
+    "sourceRow": 13,
+    "departamento": "DG",
+    "materia": "Comunicación Oral y Escrita",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Jorgelina Calonga Vera · Ms. Sady Patricia Escurra",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Jueves",
+        "hora": "07:30 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Jue 17/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Jue 12/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Jue 03/12/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Jue 17/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-14-t1",
+    "sourceRow": 14,
+    "departamento": "DCB",
+    "materia": "Fundamentos de Mecánica",
+    "seccion": "X · T1",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Crispín Rafael Vargas Fernández · Juan Fatecha Roa",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Lunes",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Miércoles",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Miércoles",
+        "hora": "13:30 - 17:45",
+        "aula": null,
+        "tipo": "laboratorio"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Mie 09/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Mie 04/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Lun 30/11/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Lun 21/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    },
+    "laboratorio": {
+      "grupo": "T1",
+      "docente": "Docente a confirmar"
+    }
+  },
+  {
+    "id": "iek-2026-14-t2",
+    "sourceRow": 14,
+    "departamento": "DCB",
+    "materia": "Fundamentos de Mecánica",
+    "seccion": "X · T2",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Crispín Rafael Vargas Fernández · Juan Fatecha Roa",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Lunes",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Miércoles",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Viernes",
+        "hora": "13:30 - 17:45",
+        "aula": null,
+        "tipo": "laboratorio"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Mie 09/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Mie 04/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Lun 30/11/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Lun 21/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    },
+    "laboratorio": {
+      "grupo": "T2",
+      "docente": "Docente a confirmar"
+    }
+  },
+  {
+    "id": "iek-2026-15",
+    "sourceRow": 15,
+    "departamento": "DCB",
+    "materia": "Geometría Analítica y Vectores",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Cinthia Noemí Ferreira Vázquez · Lic. Cynthia Raquel Acosta López · Lic. José Enrique Giménez Cantero · Ms. Cristhian José Martínez Leguizamón · Ms. Teresa Dejesús Aranda Espínola · Ms. Zunilda Rossana Fernandez Espinola",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Martes",
+        "hora": "07:30 - 09:30",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Viernes",
+        "hora": "07:30 - 09:30",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Vie 18/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Vie 13/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Vie 04/12/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Vie 18/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-16",
+    "sourceRow": 16,
+    "departamento": "DG",
+    "materia": "Optativa II - Inglés Básico",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Lissi Fabiola Torres Recalde · Lic. Sandra Magdalena Sanabria Añazco",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Martes",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Viernes",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Mar 15/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Mar 10/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Mar 24/11/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Mar 22/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-17",
+    "sourceRow": 17,
+    "departamento": "DG",
+    "materia": "Optativa II - Liderazgo y Emprendedorismo",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Sady María del Carmen Cáceres de Flores",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Sábado",
+        "hora": "07:30 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Sab 12/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Sab 07/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Sab 28/11/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Sab 12/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-18",
+    "sourceRow": 18,
+    "departamento": "DEI",
+    "materia": "Optativa II - Informatica Aplicada",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Hilda Echegaray de Palacios · Lic. Víctor Hugo Santacruz Delvalle · Ms. Roger Román Armoa García",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Sábado",
+        "hora": "07:30 - 11:15",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Sab 19/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Sab 14/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Sab 05/12/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Sab 19/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-19",
+    "sourceRow": 19,
+    "departamento": "DG",
+    "materia": "Optativa I - Inglés Básico",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Lissi Fabiola Torres Recalde · Lic. Sandra Magdalena Sanabria Añazco",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Martes",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      },
+      {
+        "dia": "Viernes",
+        "hora": "09:45 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Mar 15/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Mar 10/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Mar 24/11/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Mar 22/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-20",
+    "sourceRow": 20,
+    "departamento": "DG",
+    "materia": "Optativa I - Liderazgo y Emprendedorismo",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Sady María del Carmen Cáceres de Flores",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Sábado",
+        "hora": "07:30 - 11:45",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Sab 12/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Sab 07/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Sab 28/11/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Sab 12/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
+  },
+  {
+    "id": "iek-2026-21",
+    "sourceRow": 21,
+    "departamento": "DEI",
+    "materia": "Optativa I - Informatica Aplicada",
+    "seccion": "X",
+    "turno": "M",
+    "nivel": "1",
+    "semGrupo": "1",
+    "carrera": "IEK",
+    "enfasis": "",
+    "plan": "2026",
+    "docente": {
+      "titulo": "",
+      "apellido": "",
+      "nombre": "Lic. Hilda Echegaray de Palacios · Lic. Víctor Hugo Santacruz Delvalle · Ms. Roger Román Armoa García",
+      "correo": ""
+    },
+    "docenteEsPlantel": true,
+    "clases": [
+      {
+        "dia": "Sábado",
+        "hora": "07:30 - 11:15",
+        "aula": null,
+        "tipo": "teoria"
+      }
+    ],
+    "examenes": {
+      "parcial1": {
+        "dia": "Sab 19/09/26",
+        "hora": "",
+        "aula": ""
+      },
+      "parcial2": {
+        "dia": "Sab 14/11/26",
+        "hora": "",
+        "aula": ""
+      },
+      "final1": {
+        "dia": "Sab 05/12/26",
+        "hora": "08:00",
+        "aula": ""
+      },
+      "final2": {
+        "dia": "Sab 19/12/26",
+        "hora": "08:00",
+        "aula": ""
+      }
+    },
+    "mesaExaminadora": {
+      "presidente": "",
+      "miembro1": "",
+      "miembro2": ""
+    }
   }
 ]

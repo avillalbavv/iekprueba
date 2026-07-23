@@ -1,5 +1,6 @@
 import type { ClaseInfo, Docente, ExamenInfo, Seccion } from "./poliplanner.ts";
 import { normalizeAcademicName } from "./search.ts";
+import { academicNamesMatch } from "./academic-offer-matcher.ts";
 import ExcelJS from "exceljs";
 import type { Cell as ExcelCell, CellValue, Worksheet } from "exceljs";
 
@@ -235,8 +236,8 @@ function parseClasses(row: Row, headers: string[], academicYear: number | null):
 
 function examAliases(exam: (typeof EXAMS)[number]): string[] {
   const labels: Record<(typeof EXAMS)[number], string[]> = {
-    parcial1: ["parcial 1", "primer parcial", "1er parcial"],
-    parcial2: ["parcial 2", "segundo parcial", "2do parcial"],
+    parcial1: ["parcial 1", "primer parcial", "1er parcial", "evaluacion primera etapa"],
+    parcial2: ["parcial 2", "segundo parcial", "2do parcial", "evaluacion segunda etapa"],
     final1: ["final 1", "primer final", "1er final"],
     revision1: ["revision 1", "primera revision"],
     final2: ["final 2", "segundo final", "2do final", "extraordinario"],
@@ -273,7 +274,12 @@ function parseTeacher(row: Row, headers: string[]): Docente {
   const serialized = valueAt(row, headers, ["docente json"]);
   const parsed = jsonCell<Docente>(serialized);
   if (parsed) return parsed;
-  const fullName = valueAt(row, headers, ["docente", "profesor"]);
+  const fullName = valueAt(row, headers, [
+    "prof de laboratorio",
+    "profesor de laboratorio",
+    "docente",
+    "profesor",
+  ]);
   return {
     titulo: valueAt(row, headers, ["titulo docente", "titulo profesor", "titulo", "tit"]),
     apellido:
@@ -292,6 +298,79 @@ function findHeaderRow(rows: Row[]): number {
   return rows.slice(0, 50).findIndex((row) => {
     const headers = row.map(headerKey);
     return column(headers, ["materia", "asignatura"]) >= 0 && column(headers, ["seccion"]) >= 0;
+  });
+}
+
+interface TeacherDirectoryEntry {
+  materia: string;
+  carrera: string;
+  plan: string;
+  turno: string;
+  docentes: string[];
+}
+
+function teacherNames(value: string): string[] {
+  return [
+    ...new Set(
+      value
+        .split(/\s+-\s+/)
+        .map((item) => item.trim())
+        .filter(
+          (item) =>
+            item &&
+            normalizeAcademicName(item) !== "a confirmar a confirmar" &&
+            normalizeAcademicName(item) !== "a confirmar",
+        ),
+    ),
+  ];
+}
+
+function parseTeacherDirectory(sheet: Worksheet | undefined): TeacherDirectoryEntry[] {
+  if (!sheet) return [];
+  const rows = worksheetRows(sheet);
+  const headerRow = rows.slice(0, 30).findIndex((row) => {
+    const headers = row.map(headerKey);
+    return column(headers, ["asignatura", "materia"]) >= 0 && column(headers, ["docente"]) >= 0;
+  });
+  if (headerRow < 0) return [];
+  const headers = rows[headerRow].map(headerKey);
+  return rows.slice(headerRow + 1).flatMap((row) => {
+    const materia = valueAt(row, headers, ["asignatura", "materia"]);
+    const docentes = teacherNames(valueAt(row, headers, ["docente"]));
+    if (!materia || !docentes.length) return [];
+    return [
+      {
+        materia,
+        carrera: valueAt(row, headers, ["carrera", "sigla carrera"]),
+        plan: valueAt(row, headers, ["plan"]),
+        turno: valueAt(row, headers, ["turno"]),
+        docentes,
+      },
+    ];
+  });
+}
+
+function enrichTeachers(sections: Seccion[], directory: TeacherDirectoryEntry[]): Seccion[] {
+  if (!directory.length) return sections;
+  return sections.map((section) => {
+    const entry = directory.find(
+      (candidate) =>
+        (!candidate.carrera || headerKey(candidate.carrera) === headerKey(section.carrera)) &&
+        (!candidate.plan || headerKey(candidate.plan) === headerKey(section.plan)) &&
+        (!candidate.turno || headerKey(candidate.turno) === headerKey(section.turno)) &&
+        academicNamesMatch(candidate.materia, cleanSubjectName(section.materia)),
+    );
+    if (!entry) return section;
+    return {
+      ...section,
+      docenteEsPlantel: section.plan === "2026",
+      docente: {
+        titulo: "",
+        apellido: "",
+        nombre: entry.docentes.join(" · "),
+        correo: "",
+      },
+    };
   });
 }
 
@@ -357,7 +436,7 @@ export function parseScheduleRows(rows: Row[]): Seccion[] {
   for (let index = dataStart; index < rows.length; index += 1) {
     const row = rows[index];
     const materia = valueAt(row, headers, ["materia", "asignatura"]);
-    const seccion = valueAt(row, headers, ["seccion"]);
+    const seccion = valueAt(row, headers, ["seccion", "confirmar seccion"]);
     if (!materia || !seccion) continue;
     const turno = valueAt(row, headers, ["turno"]);
     const plan = valueAt(row, headers, ["plan", "plan academico"]);
@@ -410,7 +489,158 @@ export interface ScheduleParseResult {
   totalSections: number;
   offeredSections: number;
   examOnlySections: number;
+  laboratoryGroups?: number;
   warnings: string[];
+}
+
+export interface LaboratoryGroup {
+  materia: string;
+  carrera: string;
+  plan: string;
+  turno: string;
+  grupo: string;
+  docente: string;
+  clase: ClaseInfo;
+}
+
+export function parseLaboratoryRows(rows: Row[]): LaboratoryGroup[] {
+  const headerRow = rows.slice(0, 50).findIndex((row) => {
+    const headers = row.map(headerKey);
+    return (
+      column(headers, ["materia", "asignatura"]) >= 0 &&
+      column(headers, ["prof de laboratorio", "profesor de laboratorio"]) >= 0
+    );
+  });
+  if (headerRow < 0) {
+    throw new Error("No se encontraron las columnas Asignatura y Profesor de laboratorio.");
+  }
+  const { headers, dataStart } = buildHeaders(rows, headerRow);
+  const unique = new Map<string, LaboratoryGroup>();
+  for (let index = dataStart; index < rows.length; index += 1) {
+    const row = rows[index];
+    const materia = valueAt(row, headers, ["materia", "asignatura"]);
+    const carrera = valueAt(row, headers, ["carrera", "sigla carrera"]);
+    const plan = valueAt(row, headers, ["plan"]);
+    const turno = valueAt(row, headers, ["turno"]);
+    if (!materia || (carrera && !IEK_SHEET_NAMES.has(headerKey(carrera)))) continue;
+    const docenteRaw = valueAt(row, headers, ["prof de laboratorio", "profesor de laboratorio"]);
+    const docente = /^a confirmar$/i.test(docenteRaw)
+      ? "Docente a confirmar"
+      : docenteRaw || "Docente a confirmar";
+    for (const day of DAYS) {
+      const timeIndex = column(headers, [`${day} hora`, `hora ${day}`, day]);
+      if (timeIndex < 0) continue;
+      const roomIndex = column(headers, [`${day} aula`, `aula ${day}`]);
+      const room = roomIndex >= 0 ? text(row[roomIndex]) : "";
+      const entries = text(row[timeIndex])
+        .split(/\n|;/)
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+      for (const entry of entries) {
+        const range = entry.match(/(\d{1,2}:\d{2})\s*(?:-|–|—|a)\s*(\d{1,2}:\d{2})/i);
+        const group = entry.match(/\((T\d+)\)/i)?.[1]?.toUpperCase();
+        if (!range || !group) continue;
+        const item: LaboratoryGroup = {
+          materia: cleanSubjectName(materia),
+          carrera: carrera || "IEK",
+          plan,
+          turno,
+          grupo: group,
+          docente,
+          clase: {
+            dia: day,
+            hora: `${range[1]} - ${range[2]}`,
+            aula: room || null,
+            tipo: "laboratorio",
+          },
+        };
+        unique.set(
+          [
+            headerKey(item.materia),
+            headerKey(item.carrera),
+            headerKey(item.plan),
+            item.grupo,
+            headerKey(item.clase.dia),
+            item.clase.hora,
+          ].join("|"),
+          item,
+        );
+      }
+    }
+  }
+  const groups = [...unique.values()];
+  if (!groups.length) throw new Error("No se detectaron grupos T1, T2, etc. con horario.");
+  return groups;
+}
+
+export function mergeLaboratoryGroups(
+  sections: Seccion[],
+  laboratoryGroups: LaboratoryGroup[],
+): Seccion[] {
+  return sections.flatMap((section) => {
+    const matches = laboratoryGroups.filter(
+      (group) =>
+        (!group.plan || headerKey(group.plan) === headerKey(section.plan)) &&
+        (!group.carrera || headerKey(group.carrera) === headerKey(section.carrera)) &&
+        (!group.turno || headerKey(group.turno) === headerKey(section.turno)) &&
+        academicNamesMatch(group.materia, cleanSubjectName(section.materia)),
+    );
+    if (!matches.length) return [section];
+    return matches.map((group) => ({
+      ...section,
+      id: stableId([section.id, group.grupo]),
+      seccion: `${section.seccion} · ${group.grupo}`,
+      laboratorio: { grupo: group.grupo, docente: group.docente },
+      clases: [
+        ...section.clases.map((clase) => ({ ...clase, tipo: clase.tipo || ("teoria" as const) })),
+        group.clase,
+      ],
+    }));
+  });
+}
+
+async function parseLaboratoryFile(file: File): Promise<LaboratoryGroup[]> {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (extension !== "xlsx") {
+    throw new Error("La planificación de laboratorios debe ser un archivo XLSX.");
+  }
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await file.arrayBuffer());
+  const sheet =
+    workbook.worksheets.find((candidate) => headerKey(candidate.name) === "iek") ||
+    workbook.worksheets.find(isIekSheet);
+  if (!sheet) throw new Error("No se encontró la hoja IEK en la planificación de laboratorios.");
+  return parseLaboratoryRows(worksheetRows(sheet));
+}
+
+export async function analyzeScheduleBundle(
+  scheduleFile: File,
+  laboratoryFile?: File | null,
+): Promise<ScheduleParseResult> {
+  const schedule = await analyzeScheduleFile(scheduleFile);
+  if (!laboratoryFile) return schedule;
+  const laboratoryGroups = await parseLaboratoryFile(laboratoryFile);
+  const sections = mergeLaboratoryGroups(schedule.sections, laboratoryGroups);
+  const matchedGroups = new Set(
+    sections
+      .map((section) => section.laboratorio?.grupo)
+      .filter((group): group is string => Boolean(group)),
+  );
+  const warnings = [...schedule.warnings];
+  if (matchedGroups.size < new Set(laboratoryGroups.map((group) => group.grupo)).size) {
+    warnings.push(
+      "Algunos grupos de laboratorio no encontraron una materia equivalente en el horario principal.",
+    );
+  }
+  return {
+    ...schedule,
+    sections,
+    totalSections: sections.length,
+    offeredSections: sections.filter((section) => section.clases.length > 0).length,
+    examOnlySections: sections.filter((section) => section.clases.length === 0).length,
+    laboratoryGroups: matchedGroups.size,
+    warnings,
+  };
 }
 
 export async function analyzeScheduleFile(file: File): Promise<ScheduleParseResult> {
@@ -460,7 +690,12 @@ export async function analyzeScheduleFile(file: File): Promise<ScheduleParseResu
     }
     sheetName = sheet.name;
     try {
-      sections = parseScheduleRows(worksheetRows(sheet));
+      sections = enrichTeachers(
+        parseScheduleRows(worksheetRows(sheet)),
+        parseTeacherDirectory(
+          workbook.worksheets.find((candidate) => headerKey(candidate.name) === "docentes"),
+        ),
+      );
     } catch (error) {
       throw new Error(
         `No se pudo interpretar la hoja ${sheet.name}: ${error instanceof Error ? error.message : "formato desconocido"}`,

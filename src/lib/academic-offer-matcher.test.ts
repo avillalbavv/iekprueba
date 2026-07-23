@@ -29,3 +29,12 @@ test("no mezcla niveles ni materias con nombres parciales", () => {
   assert.equal(academicNamesMatch("Cálculo I", "Cálculo II"), false);
   assert.equal(academicNamesMatch("Dibujo Técnico", "Dibujo Técnico Mecánico"), false);
 });
+
+test("relaciona las optativas genéricas 2026 con sus alternativas concretas", () => {
+  assert.equal(academicNamesMatch("Optativa I", "Optativa I - Inglés Básico"), true);
+  assert.equal(
+    academicNamesMatch("Optativa II", "Optativa II - Liderazgo y Emprendedorismo"),
+    true,
+  );
+  assert.equal(academicNamesMatch("Optativa I", "Optativa II - Inglés Básico"), false);
+});

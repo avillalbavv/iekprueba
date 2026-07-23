@@ -21,6 +21,12 @@ export interface ScheduleDatasetDelta {
   affectedSectionIds: string[];
 }
 
+/** Reemplaza únicamente los planes presentes en una importación y conserva las demás mallas. */
+export function mergeSchedulePlans(previous: Seccion[], incoming: Seccion[]): Seccion[] {
+  const incomingPlans = new Set(incoming.map((section) => section.plan));
+  return [...previous.filter((section) => !incomingPlans.has(section.plan)), ...incoming];
+}
+
 function sectionIdentity(section: Seccion): string {
   return [
     section.plan,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Check, Clock3, LoaderCircle, Sparkles, TriangleAlert } from "lucide-react";
-import type { MateriaMalla } from "@/lib/malla-curricular";
+import type { MallaAcademicaId, MateriaMalla } from "@/lib/malla-curricular";
 import {
   esSeccionSoloExamen,
   seccionesCursablesPorMateriaMalla,
@@ -12,24 +12,33 @@ import { shiftDistanceToPreferences, type AcademicShift } from "@/lib/schedule-p
 interface Props {
   materias: MateriaMalla[];
   selectedIds: string[];
+  plan: string;
+  mallaVersion: MallaAcademicaId;
   onApply: (materiaIds: string[], sections: Record<string, string>) => void;
 }
 
-export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props) {
+export function SemesterGeneratorPanel({
+  materias,
+  selectedIds,
+  plan,
+  mallaVersion,
+  onApply,
+}: Props) {
+  const isPlan2026 = mallaVersion === "vigente-2026";
   const offered = useMemo(
     () =>
       materias
         .map((materia) => {
-          const sections = seccionesPorMateriaMalla(materia.nombre);
+          const sections = seccionesPorMateriaMalla(materia.nombre, plan);
           return {
             materia,
             sections,
-            schedulableSections: seccionesCursablesPorMateriaMalla(materia.nombre),
+            schedulableSections: seccionesCursablesPorMateriaMalla(materia.nombre, plan),
             examOnlySections: sections.filter(esSeccionSoloExamen),
           };
         })
         .filter((entry) => entry.sections.length > 0),
-    [materias],
+    [materias, plan],
   );
   const [selected, setSelected] = useState<string[]>(() =>
     selectedIds.filter((id) =>
@@ -159,8 +168,8 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
           <h2 className="font-display font-semibold">Asistente de horario</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          Seleccioná las materias y tus preferencias. Se usarán únicamente las secciones reales del
-          periodo.
+          Seleccioná las materias y tus preferencias. Se usarán únicamente las{" "}
+          {isPlan2026 ? "opciones y grupos de laboratorio" : "secciones"} reales del periodo.
         </p>
         <div className="mt-4 max-h-[28rem] space-y-3 overflow-auto pr-2">
           {offeredBySemester.map(({ semester, entries }) => {
@@ -213,7 +222,7 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
                         {materia.nombre}
                         <small className="block text-muted-foreground">
                           {schedulableSections.length
-                            ? `${schedulableSections.length} sección${schedulableSections.length === 1 ? "" : "es"} con horario`
+                            ? `${schedulableSections.length} ${isPlan2026 ? "opción" : "sección"}${schedulableSections.length === 1 ? "" : "es"} con horario`
                             : examOnlySections.length === sections.length
                               ? `${examOnlySections.length} mesa${examOnlySections.length === 1 ? "" : "s"} · solo examen final`
                               : `${sections.length} sección${sections.length === 1 ? "" : "es"} · horario pendiente de confirmación`}
@@ -441,7 +450,12 @@ export function SemesterGeneratorPanel({ materias, selectedIds, onApply }: Props
                 <li key={section.id} className="rounded-xl border border-border p-3 text-sm">
                   <b>{section.materia}</b>
                   <span className="block text-xs text-muted-foreground">
-                    Sección {section.seccion} · {section.turno}
+                    {section.laboratorio
+                      ? `Laboratorio ${section.laboratorio.grupo}`
+                      : isPlan2026
+                        ? "Sección única"
+                        : `Sección ${section.seccion}`}{" "}
+                    · {section.turno}
                   </span>
                 </li>
               ))}

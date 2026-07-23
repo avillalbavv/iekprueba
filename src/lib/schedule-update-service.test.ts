@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { compareScheduleDatasets } from "./schedule-dataset-diff.ts";
+import { compareScheduleDatasets, mergeSchedulePlans } from "./schedule-dataset-diff.ts";
 import type { Seccion } from "./poliplanner.ts";
 
 function section(patch: Partial<Seccion> = {}): Seccion {
@@ -47,4 +47,29 @@ test("un archivo idéntico no genera cambios ni notificaciones afectadas", () =>
   assert.equal(delta.unchanged, 1);
   assert.equal(delta.changed + delta.added + delta.removed, 0);
   assert.deepEqual(delta.affectedSectionIds, []);
+});
+
+test("una actualización reemplaza su plan y conserva las demás mallas", () => {
+  const old2008 = section();
+  const plan2026 = section({
+    id: "plan-2026",
+    plan: "2026",
+    materia: "Fundamentos de Mecánica",
+  });
+  const updated2008 = section({ id: "new-2008", clases: [] });
+  const merged = mergeSchedulePlans([old2008, plan2026], [updated2008]);
+
+  assert.equal(merged.length, 2);
+  assert.equal(
+    merged.some((entry) => entry.id === "plan-2026"),
+    true,
+  );
+  assert.equal(
+    merged.some((entry) => entry.id === "old-section-id"),
+    false,
+  );
+  assert.equal(
+    merged.some((entry) => entry.id === "new-2008"),
+    true,
+  );
 });

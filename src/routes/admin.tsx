@@ -32,7 +32,7 @@ import {
   type RegisteredUser,
 } from "@/lib/admin-service";
 import { deleteScheduleRevision, publishScheduleRevision } from "@/lib/schedule-update-service";
-import { analyzeScheduleFile, type ScheduleParseResult } from "@/lib/schedule-import-parser";
+import { analyzeScheduleBundle, type ScheduleParseResult } from "@/lib/schedule-import-parser";
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 type Tab =
   | "dashboard"
@@ -676,6 +676,7 @@ function ScheduleUpdates({
   perform: AdminOperation;
 }) {
   const [file, setFile] = useState<File | null>(null);
+  const [laboratoryFile, setLaboratoryFile] = useState<File | null>(null);
   const [summary, setSummary] = useState("");
   const [sending, setSending] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -683,19 +684,28 @@ function ScheduleUpdates({
   const [parseError, setParseError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function chooseFile(next: File | null) {
-    setFile(next);
+  async function analyzeFiles(main: File | null, labs: File | null) {
     setParseResult(null);
     setParseError(null);
-    if (!next) return;
+    if (!main) return;
     setParsing(true);
     try {
-      setParseResult(await analyzeScheduleFile(next));
+      setParseResult(await analyzeScheduleBundle(main, labs));
     } catch (error) {
       setParseError(error instanceof Error ? error.message : "No se pudo procesar el archivo.");
     } finally {
       setParsing(false);
     }
+  }
+
+  async function chooseFile(next: File | null) {
+    setFile(next);
+    await analyzeFiles(next, laboratoryFile);
+  }
+
+  async function chooseLaboratoryFile(next: File | null) {
+    setLaboratoryFile(next);
+    await analyzeFiles(file, next);
   }
 
   async function publish(event: React.FormEvent) {
@@ -706,6 +716,7 @@ function ScheduleUpdates({
       try {
         await publishScheduleRevision(file, summary, parseResult.sections);
         setFile(null);
+        setLaboratoryFile(null);
         setParseResult(null);
         setSummary("");
         await reload();
@@ -743,15 +754,27 @@ function ScheduleUpdates({
         <h2 className="font-semibold">Publicar nueva versión</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Subí el Excel o CSV y verificá la cantidad de secciones detectadas. La publicación
-          sustituye la fuente central que utilizan las herramientas académicas.
+          actualiza únicamente los planes incluidos y conserva las demás mallas.
         </p>
-        <input
-          required
-          type="file"
-          accept=".xlsx,.csv"
-          onChange={(e) => void chooseFile(e.target.files?.[0] || null)}
-          className="mt-4 block w-full text-sm"
-        />
+        <label className="mt-4 block text-xs font-medium text-foreground">
+          Clases y exámenes
+          <input
+            required
+            type="file"
+            accept=".xlsx,.csv"
+            onChange={(e) => void chooseFile(e.target.files?.[0] || null)}
+            className="mt-1.5 block w-full text-sm font-normal"
+          />
+        </label>
+        <label className="mt-3 block text-xs font-medium text-foreground">
+          Prácticas de laboratorio <span className="text-muted-foreground">(opcional)</span>
+          <input
+            type="file"
+            accept=".xlsx"
+            onChange={(e) => void chooseLaboratoryFile(e.target.files?.[0] || null)}
+            className="mt-1.5 block w-full text-sm font-normal"
+          />
+        </label>
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
           En libros oficiales se procesa únicamente la hoja <b>IEK</b>. El sistema reconstruye los
           encabezados agrupados y detecta materias, secciones, departamentos, docentes, clases,
@@ -772,6 +795,13 @@ function ScheduleUpdates({
               {parseResult.offeredSections} con clases · {parseResult.examOnlySections} solo con
               exámenes
             </p>
+            {parseResult.laboratoryGroups ? (
+              <p className="mt-1">
+                {parseResult.laboratoryGroups} grupo
+                {parseResult.laboratoryGroups === 1 ? "" : "s"} de laboratorio integrado
+                {parseResult.laboratoryGroups === 1 ? "" : "s"}.
+              </p>
+            ) : null}
             {parseResult.warnings.length > 0 && (
               <ul className="mt-2 list-disc space-y-1 pl-4 text-amber-700 dark:text-amber-300">
                 {parseResult.warnings.map((warning) => (
