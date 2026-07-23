@@ -282,9 +282,35 @@ test("interpreta el formato 2026 y enlaza el plantel de la hoja Docentes", async
   assert.equal(result.totalSections, 1);
   assert.equal(result.sections[0].plan, "2026");
   assert.equal(result.sections[0].docenteEsPlantel, true);
+  assert.equal(result.sections[0].modoSeleccion, "opcion");
   assert.equal(result.sections[0].docente.nombre, "Crispín Vargas · Juan Fatecha");
   assert.equal(result.sections[0].examenes.parcial1?.dia, "Mie 09/09/26");
   assert.equal(result.sections[0].examenes.parcial2?.dia, "Mie 04/11/26");
+});
+
+test("el formato 2008 permite elegir por turno sin depender de una sección", async () => {
+  const workbook = new ExcelJS.Workbook();
+  workbook.addWorksheet("IEK").addRows([
+    ["Asignatura", "Sigla carrera", "Plan", "Turno", "Lunes"],
+    ["Cálculo I", "IEK", 2008, "N", "20:00 - 22:15"],
+  ]);
+  workbook.addWorksheet("Docentes").addRows([
+    ["Asignatura", "Carrera", "Plan", "Turno", "Docente"],
+    ["Cálculo I", "IEK", 2008, "N", "Prof. Ada Lovelace"],
+  ]);
+  const bytes = await workbook.xlsx.writeBuffer();
+  const result = await analyzeScheduleFile(
+    new File([bytes], "horario-2008.xlsx", {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+  );
+
+  assert.equal(result.totalSections, 1);
+  assert.equal(result.sections[0].seccion, "N");
+  assert.equal(result.sections[0].turno, "N");
+  assert.equal(result.sections[0].modoSeleccion, "turno");
+  assert.equal(result.sections[0].docenteEsPlantel, true);
+  assert.equal(result.sections[0].docente.nombre, "Prof. Ada Lovelace");
 });
 
 test("integra los grupos T1 y T2 sin duplicar filas del laboratorio", () => {

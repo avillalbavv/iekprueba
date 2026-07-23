@@ -297,7 +297,10 @@ function parseTeacher(row: Row, headers: string[]): Docente {
 function findHeaderRow(rows: Row[]): number {
   return rows.slice(0, 50).findIndex((row) => {
     const headers = row.map(headerKey);
-    return column(headers, ["materia", "asignatura"]) >= 0 && column(headers, ["seccion"]) >= 0;
+    return (
+      column(headers, ["materia", "asignatura"]) >= 0 &&
+      (column(headers, ["seccion"]) >= 0 || column(headers, ["turno"]) >= 0)
+    );
   });
 }
 
@@ -353,6 +356,12 @@ function parseTeacherDirectory(sheet: Worksheet | undefined): TeacherDirectoryEn
 function enrichTeachers(sections: Seccion[], directory: TeacherDirectoryEntry[]): Seccion[] {
   if (!directory.length) return sections;
   return sections.map((section) => {
+    const modoSeleccion =
+      section.plan === "2008"
+        ? ("turno" as const)
+        : section.plan === "2026"
+          ? ("opcion" as const)
+          : undefined;
     const entry = directory.find(
       (candidate) =>
         (!candidate.carrera || headerKey(candidate.carrera) === headerKey(section.carrera)) &&
@@ -360,10 +369,11 @@ function enrichTeachers(sections: Seccion[], directory: TeacherDirectoryEntry[])
         (!candidate.turno || headerKey(candidate.turno) === headerKey(section.turno)) &&
         academicNamesMatch(candidate.materia, cleanSubjectName(section.materia)),
     );
-    if (!entry) return section;
+    if (!entry) return { ...section, modoSeleccion };
     return {
       ...section,
-      docenteEsPlantel: section.plan === "2026",
+      modoSeleccion,
+      docenteEsPlantel: true,
       docente: {
         titulo: "",
         apellido: "",
@@ -429,16 +439,18 @@ function buildHeaders(rows: Row[], headerRow: number): { headers: string[]; data
 
 export function parseScheduleRows(rows: Row[]): Seccion[] {
   const headerRow = findHeaderRow(rows);
-  if (headerRow < 0) throw new Error("No se encontró una fila con las columnas Materia y Sección.");
+  if (headerRow < 0)
+    throw new Error("No se encontró una fila con las columnas Materia y Turno o Sección.");
   const { headers, dataStart } = buildHeaders(rows, headerRow);
   const academicYear = inferAcademicYear(rows);
   const result: Seccion[] = [];
   for (let index = dataStart; index < rows.length; index += 1) {
     const row = rows[index];
     const materia = valueAt(row, headers, ["materia", "asignatura"]);
-    const seccion = valueAt(row, headers, ["seccion", "confirmar seccion"]);
-    if (!materia || !seccion) continue;
     const turno = valueAt(row, headers, ["turno"]);
+    const explicitSection = valueAt(row, headers, ["seccion", "confirmar seccion"]);
+    if (!materia || (!turno && !explicitSection)) continue;
+    const seccion = explicitSection || turno || "Única";
     const plan = valueAt(row, headers, ["plan", "plan academico"]);
     const semGrupo = valueAt(row, headers, ["semestre", "sem grupo", "semgrupo"]);
     const carrera = valueAt(row, headers, ["sigla carrera", "carrera"]);

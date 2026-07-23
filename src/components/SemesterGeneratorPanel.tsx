@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Check, Clock3, LoaderCircle, Sparkles, TriangleAlert } from "lucide-react";
-import type { MallaAcademicaId, MateriaMalla } from "@/lib/malla-curricular";
+import type { EnfasisId, MallaAcademicaId, MateriaMalla } from "@/lib/malla-curricular";
 import {
+  etiquetaSeleccion,
   esSeccionSoloExamen,
   seccionesCursablesPorMateriaMalla,
   seccionesPorMateriaMalla,
@@ -14,6 +15,7 @@ interface Props {
   selectedIds: string[];
   plan: string;
   mallaVersion: MallaAcademicaId;
+  enfasis: EnfasisId;
   onApply: (materiaIds: string[], sections: Record<string, string>) => void;
 }
 
@@ -22,6 +24,7 @@ export function SemesterGeneratorPanel({
   selectedIds,
   plan,
   mallaVersion,
+  enfasis,
   onApply,
 }: Props) {
   const isPlan2026 = mallaVersion === "vigente-2026";
@@ -29,16 +32,16 @@ export function SemesterGeneratorPanel({
     () =>
       materias
         .map((materia) => {
-          const sections = seccionesPorMateriaMalla(materia.nombre, plan);
+          const sections = seccionesPorMateriaMalla(materia.nombre, plan, enfasis);
           return {
             materia,
             sections,
-            schedulableSections: seccionesCursablesPorMateriaMalla(materia.nombre, plan),
+            schedulableSections: seccionesCursablesPorMateriaMalla(materia.nombre, plan, enfasis),
             examOnlySections: sections.filter(esSeccionSoloExamen),
           };
         })
         .filter((entry) => entry.sections.length > 0),
-    [materias, plan],
+    [materias, plan, enfasis],
   );
   const [selected, setSelected] = useState<string[]>(() =>
     selectedIds.filter((id) =>
@@ -169,7 +172,8 @@ export function SemesterGeneratorPanel({
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           Seleccioná las materias y tus preferencias. Se usarán únicamente las{" "}
-          {isPlan2026 ? "opciones y grupos de laboratorio" : "secciones"} reales del periodo.
+          {isPlan2026 ? "opciones y grupos de laboratorio" : "alternativas por turno"} reales del
+          periodo.
         </p>
         <div className="mt-4 max-h-[28rem] space-y-3 overflow-auto pr-2">
           {offeredBySemester.map(({ semester, entries }) => {
@@ -222,10 +226,18 @@ export function SemesterGeneratorPanel({
                         {materia.nombre}
                         <small className="block text-muted-foreground">
                           {schedulableSections.length
-                            ? `${schedulableSections.length} ${isPlan2026 ? "opción" : "sección"}${schedulableSections.length === 1 ? "" : "es"} con horario`
+                            ? `${schedulableSections.length} ${
+                                isPlan2026
+                                  ? schedulableSections.length === 1
+                                    ? "opción"
+                                    : "opciones"
+                                  : schedulableSections.length === 1
+                                    ? "alternativa"
+                                    : "alternativas"
+                              } con horario`
                             : examOnlySections.length === sections.length
                               ? `${examOnlySections.length} mesa${examOnlySections.length === 1 ? "" : "s"} · solo examen final`
-                              : `${sections.length} sección${sections.length === 1 ? "" : "es"} · horario pendiente de confirmación`}
+                              : `${sections.length} alternativa${sections.length === 1 ? "" : "s"} · horario pendiente de confirmación`}
                         </small>
                       </span>
                     </label>
@@ -273,7 +285,7 @@ export function SemesterGeneratorPanel({
         >
           {isGenerating ? (
             <>
-              <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" /> Analizando secciones…
+              <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" /> Analizando alternativas…
             </>
           ) : (
             <>
@@ -294,9 +306,9 @@ export function SemesterGeneratorPanel({
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
               {
                 [
-                  "Leyendo las materias y secciones reales del periodo…",
+                  "Leyendo las materias y alternativas reales del periodo…",
                   "Comparando turnos y el día libre solicitado…",
-                  "Descartando choques y secciones solo para examen…",
+                  "Descartando choques y opciones solo para examen…",
                   "Minimizando las horas libres entre clases…",
                 ][analysisStep]
               }
@@ -324,7 +336,7 @@ export function SemesterGeneratorPanel({
             <TriangleAlert className="mx-auto h-7 w-7 text-amber-500" />
             <p className="mt-3 font-medium">No se encontró una combinación sin choques.</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Probá con menos materias o revisá manualmente sus secciones.
+              Probá con menos materias o revisá manualmente sus turnos.
             </p>
           </div>
         )}
@@ -437,7 +449,7 @@ export function SemesterGeneratorPanel({
                           {shiftLabel[section.turno] || section.turno}
                           {hasPreferred || hasCloserAlternative
                             ? ` para conservar más materias y evitar choques.`
-                            : ` porque no tiene sección en ${preferredShifts.map((item) => shiftLabel[item]).join(" o ")}; es el turno viable más cercano.`}
+                            : ` porque no se ofrece en ${preferredShifts.map((item) => shiftLabel[item]).join(" o ")}; es el turno viable más cercano.`}
                         </span>
                       </div>
                     );
@@ -450,12 +462,14 @@ export function SemesterGeneratorPanel({
                 <li key={section.id} className="rounded-xl border border-border p-3 text-sm">
                   <b>{section.materia}</b>
                   <span className="block text-xs text-muted-foreground">
-                    {section.laboratorio
-                      ? `Laboratorio ${section.laboratorio.grupo}`
-                      : isPlan2026
-                        ? "Sección única"
-                        : `Sección ${section.seccion}`}{" "}
-                    · {section.turno}
+                    {etiquetaSeleccion(
+                      section,
+                      offered.find((entry) =>
+                        entry.schedulableSections.some(
+                          (candidate) => candidate.materiaId === section.materiaId,
+                        ),
+                      )?.schedulableSections,
+                    )}
                   </span>
                 </li>
               ))}

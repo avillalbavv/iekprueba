@@ -4,6 +4,7 @@ import { academicNamesMatch } from "./academic-offer-matcher";
 import { esTipoRevision } from "./academic-events";
 import { writeLocalState } from "./user-state";
 import { normalizeScheduleData } from "./schedule-data-normalizer";
+import type { EnfasisId } from "./malla-curricular";
 
 export { normalizeScheduleData } from "./schedule-data-normalizer";
 
@@ -46,6 +47,7 @@ export interface Seccion {
   enfasis: string;
   docente: Docente;
   docenteEsPlantel?: boolean;
+  modoSeleccion?: "seccion" | "turno" | "opcion";
   laboratorio?: {
     grupo: string;
     docente: string;
@@ -435,6 +437,24 @@ export function nombreOfertadoParaMalla(nombreMalla: string): string | null {
 const seccionesPorMateriaCache = new Map<string, Seccion[]>();
 const seccionesCursablesCache = new Map<string, Seccion[]>();
 
+const ENFASIS_EXCEL: Record<EnfasisId, string[]> = {
+  "control-industrial": ["ci", "control industrial"],
+  "electronica-medica": ["em", "electronica medica"],
+  mecatronica: ["mec", "mecatronica"],
+  teleprocesamiento: ["ti", "teleprocesamiento"],
+};
+
+/** Filtra las filas específicas de una orientación sin excluir las materias comunes. */
+export function seccionAplicaAEnfasis(section: Seccion, enfasis?: EnfasisId | null): boolean {
+  if (!enfasis) return true;
+  const source = normalizeAcademicName(section.enfasis);
+  const tokens = source.split(/\s+/).filter(Boolean);
+  if (!tokens.length || tokens.every((token) => /^-+$/.test(token))) return true;
+  return ENFASIS_EXCEL[enfasis].some(
+    (alias) => tokens.includes(alias) || (alias.includes(" ") && source.includes(alias)),
+  );
+}
+
 /** Una sección es solo de examen cuando la fuente oficial no informa ningún horario de clase. */
 export function esSeccionSoloExamen(section: Pick<Seccion, "clases">): boolean {
   return section.clases.length === 0;
@@ -449,11 +469,18 @@ export function nombreMateriaVisible(nombre: string): string {
 }
 
 /** Todas las secciones ofertadas este período para una materia de la malla curricular. */
-export function seccionesPorMateriaMalla(nombreMalla: string, plan = "2008"): Seccion[] {
-  const cacheKey = `${plan}::${nombreMalla}`;
+export function seccionesPorMateriaMalla(
+  nombreMalla: string,
+  plan = "2008",
+  enfasis?: EnfasisId | null,
+): Seccion[] {
+  const cacheKey = `${plan}::${enfasis || "todos"}::${nombreMalla}`;
   if (seccionesPorMateriaCache.has(cacheKey)) return seccionesPorMateriaCache.get(cacheKey)!;
   const result = DATA.filter(
-    (section) => section.plan === plan && academicNamesMatch(nombreMalla, section.materia),
+    (section) =>
+      section.plan === plan &&
+      academicNamesMatch(nombreMalla, section.materia) &&
+      seccionAplicaAEnfasis(section, enfasis),
   ).sort(
     (a, b) =>
       a.turno.localeCompare(b.turno) ||
@@ -465,10 +492,14 @@ export function seccionesPorMateriaMalla(nombreMalla: string, plan = "2008"): Se
 }
 
 /** Secciones con al menos un horario semanal válido informado por la fuente oficial. */
-export function seccionesCursablesPorMateriaMalla(nombreMalla: string, plan = "2008"): Seccion[] {
-  const cacheKey = `${plan}::${nombreMalla}`;
+export function seccionesCursablesPorMateriaMalla(
+  nombreMalla: string,
+  plan = "2008",
+  enfasis?: EnfasisId | null,
+): Seccion[] {
+  const cacheKey = `${plan}::${enfasis || "todos"}::${nombreMalla}`;
   if (seccionesCursablesCache.has(cacheKey)) return seccionesCursablesCache.get(cacheKey)!;
-  const result = seccionesPorMateriaMalla(nombreMalla, plan).filter(
+  const result = seccionesPorMateriaMalla(nombreMalla, plan, enfasis).filter(
     (section) => !esSeccionSoloExamen(section),
   );
   seccionesCursablesCache.set(cacheKey, result);
@@ -476,14 +507,44 @@ export function seccionesCursablesPorMateriaMalla(nombreMalla: string, plan = "2
 }
 
 /** Departamentos informados por el Excel para una materia. */
-export function departamentosPorMateriaMalla(nombreMalla: string, plan = "2008"): string[] {
+export function departamentosPorMateriaMalla(
+  nombreMalla: string,
+  plan = "2008",
+  enfasis?: EnfasisId | null,
+): string[] {
   return [
     ...new Set(
-      seccionesPorMateriaMalla(nombreMalla, plan)
+      seccionesPorMateriaMalla(nombreMalla, plan, enfasis)
         .map((section) => section.departamento?.trim())
         .filter((value): value is string => Boolean(value)),
     ),
   ].sort((a, b) => a.localeCompare(b, "es"));
+}
+
+/** Etiqueta visible de una alternativa. La sección X/Y queda como dato interno. */
+export function etiquetaSeleccion(section: Seccion, alternatives: Seccion[] = []): string {
+  const mode =
+    section.modoSeleccion || (section.plan === "2026" ? ("opcion" as const) : ("seccion" as const));
+  if (mode === "turno") {
+    const shift = TURNO_LABEL[section.turno] || section.turno || "sin confirmar";
+    let label = `Turno ${shift}`;
+    if (section.laboratorio?.grupo) label += ` · laboratorio ${section.laboratorio.grupo}`;
+    const comparable = alternatives.filter(
+      (candidate) =>
+        candidate.turno === section.turno &&
+        (candidate.laboratorio?.grupo || "") === (section.laboratorio?.grupo || ""),
+    );
+    if (comparable.length > 1) {
+      const index = comparable.findIndex((candidate) => candidate.id === section.id);
+      if (index >= 0) label += ` · horario ${index + 1}`;
+    }
+    return label;
+  }
+  if (section.laboratorio?.grupo) return `Grupo de laboratorio ${section.laboratorio.grupo}`;
+  if (mode === "opcion") {
+    return alternatives.length === 1 ? "Opción única" : `Opción ${section.seccion}`;
+  }
+  return `Sección ${section.seccion}`;
 }
 
 /** Resumen corto del horario semanal de una sección, ej: "Lu 10:00-12:15 · Mi 10:00-12:15" */

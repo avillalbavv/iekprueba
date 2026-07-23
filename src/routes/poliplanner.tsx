@@ -4,7 +4,7 @@
  * Nuevo flujo: 1) carrera (única, informativo) → 2) énfasis → 3) malla
  * curricular COMPLETA (Ciencias Básicas + comunes + propias del énfasis,
  * Semestre 1 al 10) agrupada en acordeones → 4) para cada materia
- * elegida y ofertada este período, sección/docente/horario/aula →
+ * elegida y ofertada este período, turno/docente/horario/aula →
  * 5) horario semanal estilo Google Calendar + calendario de exámenes
  * (agenda por tipo + vista mensual).
  */
@@ -71,6 +71,7 @@ import {
   loadSelection,
   saveSelection,
   docenteNombre,
+  etiquetaSeleccion,
   nombreMateriaVisible,
   resumenHorario,
   TURNO_LABEL,
@@ -182,7 +183,7 @@ function PoliPlannerPage() {
       if (
         materia &&
         selectedSection &&
-        seccionesCursablesPorMateriaMalla(materia.nombre, schedulePlan).some(
+        seccionesCursablesPorMateriaMalla(materia.nombre, schedulePlan, enfasis).some(
           (s) => s.id === selectedSection,
         )
       ) {
@@ -217,7 +218,18 @@ function PoliPlannerPage() {
   }
 
   function toggleMateria(id: string) {
-    setMateriaIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    if (materiaIds.includes(id)) {
+      removeMateria(id);
+      return;
+    }
+    const materia = mallaById.get(id);
+    const options = materia
+      ? seccionesCursablesPorMateriaMalla(materia.nombre, schedulePlan, enfasis)
+      : [];
+    setMateriaIds((current) => [...current, id]);
+    if (options.length === 1) {
+      setChoice((current) => ({ ...current, [id]: options[0].id }));
+    }
   }
 
   function removeMateria(id: string) {
@@ -313,11 +325,11 @@ function PoliPlannerPage() {
       .map((id) => {
         const m = mallaById.get(id);
         if (!m) return null;
-        const ofertadas = seccionesCursablesPorMateriaMalla(m.nombre, schedulePlan);
+        const ofertadas = seccionesCursablesPorMateriaMalla(m.nombre, schedulePlan, enfasis);
         return ofertadas.find((s) => s.id === choice[id]) ?? null;
       })
       .filter((s): s is Seccion => Boolean(s));
-  }, [materiaIds, choice, mallaById, schedulePlan]);
+  }, [materiaIds, choice, mallaById, schedulePlan, enfasis]);
 
   const conflicts = useMemo(() => findScheduleConflicts(chosenSecciones), [chosenSecciones]);
   const examenes = useMemo(() => listExamenes(chosenSecciones), [chosenSecciones]);
@@ -433,6 +445,7 @@ function PoliPlannerPage() {
             selectedIds={materiaIds}
             plan={schedulePlan}
             mallaVersion={mallaVersion}
+            enfasis={enfasis}
             onApply={(ids, sections) => {
               setMateriaIds(ids);
               setChoice(sections);
@@ -454,7 +467,7 @@ function PoliPlannerPage() {
                   </span>
                   {pendientes > 0 && (
                     <span className="ml-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-medium text-amber-500">
-                      {pendientes} sin sección
+                      {pendientes} sin {mallaVersion === "plan-2008" ? "turno" : "opción"}
                     </span>
                   )}
                   {conflicts.length > 0 && (
@@ -560,6 +573,7 @@ function PoliPlannerPage() {
                                 key={m.id}
                                 materia={m}
                                 plan={schedulePlan}
+                                enfasis={enfasis}
                                 checked={materiaIds.includes(m.id)}
                                 onToggle={() => toggleMateria(m.id)}
                               />
@@ -584,9 +598,15 @@ function PoliPlannerPage() {
                     <h2 className="font-display text-sm font-semibold text-foreground">
                       {mallaVersion === "vigente-2026"
                         ? "Revisá la opción, el horario y el plantel docente"
-                        : "Elegí sección y docente"}
+                        : "Elegí el turno de cada materia"}
                     </h2>
                   </div>
+                  {mallaVersion === "plan-2008" && (
+                    <p className="mb-4 text-xs text-muted-foreground">
+                      Los docentes se toman de la nómina oficial según materia y turno. Si un turno
+                      tiene más de un horario, vas a ver cada alternativa por separado.
+                    </p>
+                  )}
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {materiaIds.map((id) => {
                       const m = mallaById.get(id);
@@ -596,7 +616,7 @@ function PoliPlannerPage() {
                           key={id}
                           materia={m}
                           plan={schedulePlan}
-                          isPlan2026={mallaVersion === "vigente-2026"}
+                          enfasis={enfasis}
                           chosenId={choice[id]}
                           onChoose={(secId) => chooseSection(id, secId)}
                           onRemove={() => removeMateria(id)}
@@ -695,7 +715,7 @@ function PoliPlannerPage() {
                       {horarioConfirmado
                         ? "Quedó guardado, se envió a Asistencia y ya está disponible para ¿Dónde rindo?, el calendario y la sincronización."
                         : pendientes > 0
-                          ? `Todavía falta elegir una sección para ${pendientes} materia${pendientes === 1 ? "" : "s"}.`
+                          ? `Todavía falta elegir ${mallaVersion === "plan-2008" ? "un turno" : "una opción"} para ${pendientes} materia${pendientes === 1 ? "" : "s"}.`
                           : conflicts.length > 0
                             ? "Resolvé los choques señalados antes de confirmar."
                             : "Revisá la distribución semanal y confirmá para guardar este horario como el vigente."}
@@ -775,14 +795,14 @@ function MallaPicker({
             Elegí tu malla curricular
           </h2>
           <p className="text-xs text-muted-foreground">
-            Cada malla usa únicamente sus propias materias, secciones y horarios.
+            Cada malla usa únicamente sus propias materias, turnos y horarios.
           </p>
         </div>
       </div>
       <div className="pp-panel grid gap-2 rounded-2xl p-2 sm:grid-cols-2">
         {(
           [
-            ["plan-2008", "Malla 2008", "Plan anterior y sus secciones docentes"],
+            ["plan-2008", "Malla 2008", "Elegís por turno · docentes de la nómina oficial"],
             [
               "vigente-2026",
               "Malla 2026",
@@ -887,21 +907,23 @@ function EnfasisPicker({
 function MateriaChip({
   materia,
   plan,
+  enfasis,
   checked,
   onToggle,
 }: {
   materia: MateriaMalla;
   plan: string;
+  enfasis: EnfasisId;
   checked: boolean;
   onToggle: () => void;
 }) {
   const ofertada = useMemo(
-    () => seccionesCursablesPorMateriaMalla(materia.nombre, plan).length > 0,
-    [materia.nombre, plan],
+    () => seccionesCursablesPorMateriaMalla(materia.nombre, plan, enfasis).length > 0,
+    [materia.nombre, plan, enfasis],
   );
   const departamentos = useMemo(
-    () => departamentosPorMateriaMalla(materia.nombre, plan),
-    [materia.nombre, plan],
+    () => departamentosPorMateriaMalla(materia.nombre, plan, enfasis),
+    [materia.nombre, plan, enfasis],
   );
 
   return (
@@ -936,12 +958,12 @@ function MateriaChip({
   );
 }
 
-/* ═══════════════════════════════ Paso 4: sección/docente/horario/aula ═══════════════════════════════ */
+/* ═══════════════════════════════ Paso 4: turno/docente/horario/aula ═══════════════════════════════ */
 
 function SectionCard({
   materia,
   plan,
-  isPlan2026,
+  enfasis,
   chosenId,
   onChoose,
   onRemove,
@@ -950,7 +972,7 @@ function SectionCard({
 }: {
   materia: MateriaMalla;
   plan: string;
-  isPlan2026: boolean;
+  enfasis: EnfasisId;
   chosenId: string | undefined;
   onChoose: (id: string) => void;
   onRemove: () => void;
@@ -960,16 +982,26 @@ function SectionCard({
   const [search, setSearch] = useState("");
   const color = colorForMateria(materia.nombre);
   const secciones = useMemo(
-    () => seccionesCursablesPorMateriaMalla(materia.nombre, plan),
-    [materia.nombre, plan],
+    () => seccionesCursablesPorMateriaMalla(materia.nombre, plan, enfasis),
+    [materia.nombre, plan, enfasis],
   );
+  const eligePorTurno = secciones.some((section) => section.modoSeleccion === "turno");
+  const turnosDisponibles = new Set(secciones.map((section) => section.turno).filter(Boolean)).size;
+  const gruposLaboratorio = new Set(
+    secciones
+      .map((section) => section.laboratorio?.grupo)
+      .filter((group): group is string => Boolean(group)),
+  ).size;
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return secciones;
     return secciones.filter(
       (s) =>
-        s.seccion.toLowerCase().includes(q) || docenteNombre(s.docente).toLowerCase().includes(q),
+        s.seccion.toLowerCase().includes(q) ||
+        (TURNO_LABEL[s.turno] || s.turno).toLowerCase().includes(q) ||
+        docenteNombre(s.docente).toLowerCase().includes(q) ||
+        resumenHorario(s).toLowerCase().includes(q),
     );
   }, [secciones, search]);
 
@@ -995,8 +1027,13 @@ function SectionCard({
             </h3>
           </div>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Sem. {materia.semestre} · {secciones.length} {isPlan2026 ? "opción" : "sección"}
-            {secciones.length === 1 ? "" : "es"}
+            Sem. {materia.semestre} ·{" "}
+            {eligePorTurno
+              ? `${turnosDisponibles} turno${turnosDisponibles === 1 ? "" : "s"}`
+              : `${secciones.length} opción${secciones.length === 1 ? "" : "es"}`}
+            {gruposLaboratorio > 0
+              ? ` · ${gruposLaboratorio} grupo${gruposLaboratorio === 1 ? "" : "s"} de laboratorio`
+              : ""}
           </p>
         </div>
         <button
@@ -1014,7 +1051,9 @@ function SectionCard({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar docente o sección…"
+            placeholder={
+              eligePorTurno ? "Buscar turno, horario o docente…" : "Buscar opción o docente…"
+            }
             className="w-full rounded-lg border border-border bg-card py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 transition"
           />
         </div>
@@ -1038,14 +1077,10 @@ function SectionCard({
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium text-foreground">
-                  {s.laboratorio
-                    ? `Grupo de laboratorio ${s.laboratorio.grupo}`
-                    : isPlan2026 && secciones.length === 1
-                      ? "Sección única"
-                      : `Sección ${s.seccion}`}
+                  {etiquetaSeleccion(s, secciones)}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  {s.turno && (
+                  {s.turno && !eligePorTurno && (
                     <span
                       className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
                       style={{
@@ -1067,7 +1102,11 @@ function SectionCard({
                 )}
                 <p className="line-clamp-2" title={docenteNombre(s.docente)}>
                   <span className="text-muted-foreground/60">
-                    {s.docenteEsPlantel ? "Plantel informado: " : "Docente: "}
+                    {s.docenteEsPlantel
+                      ? eligePorTurno
+                        ? "Docentes informados para el turno: "
+                        : "Plantel informado: "
+                      : "Docente: "}
                   </span>
                   {docenteNombre(s.docente)}
                 </p>
@@ -1289,7 +1328,7 @@ function WeeklyCalendar({
                     return (
                       <div
                         key={s.id + idx}
-                        title={`${s.materia} · ${c.tipo === "laboratorio" ? `Laboratorio ${s.laboratorio?.grupo || ""}` : `Sección ${s.seccion}`} · ${docenteNombre(s.docente)} · ${c.hora}${c.aula ? " · " + c.aula : ""}`}
+                        title={`${s.materia} · ${etiquetaSeleccion(s, secciones)} · ${docenteNombre(s.docente)} · ${c.hora}${c.aula ? " · " + c.aula : ""}`}
                         className={`pp-block absolute overflow-hidden rounded-md p-2 text-[10px] leading-tight ${isConflict ? "conflict-pulse ring-2 ring-red-400" : ""}`}
                         style={{
                           top,
@@ -1324,11 +1363,8 @@ function WeeklyCalendar({
                         </p>
                         {height > 66 && (
                           <p className="mt-1 flex items-center gap-1 truncate text-foreground/65">
-                            <MapPin className="h-3 w-3 shrink-0" />{" "}
-                            {c.tipo === "laboratorio"
-                              ? `Grupo ${s.laboratorio?.grupo || s.seccion}`
-                              : `Sección ${s.seccion}`}{" "}
-                            · {c.aula || "Aula pendiente"}
+                            <MapPin className="h-3 w-3 shrink-0" /> {etiquetaSeleccion(s)} ·{" "}
+                            {c.aula || "Aula pendiente"}
                           </p>
                         )}
                         {height > 92 && (
@@ -1362,7 +1398,7 @@ function Legend({ secciones }: { secciones: Seccion[] }) {
             className="h-2 w-2 rounded-full"
             style={{ background: colorForMateria(s.materia) }}
           />
-          {s.materia} <span className="text-muted-foreground/70">· {s.seccion}</span>
+          {s.materia} <span className="text-muted-foreground/70">· {etiquetaSeleccion(s)}</span>
         </span>
       ))}
     </div>
@@ -1430,7 +1466,7 @@ function ScheduleList({
               <th className="px-4 py-3 font-medium">Día</th>
               <th className="px-4 py-3 font-medium">Hora</th>
               <th className="px-4 py-3 font-medium">Materia</th>
-              <th className="px-4 py-3 font-medium">Sección</th>
+              <th className="px-4 py-3 font-medium">Turno / grupo</th>
               <th className="px-4 py-3 font-medium">Docente</th>
               <th className="px-4 py-3 font-medium">Aula</th>
             </tr>
@@ -1461,9 +1497,7 @@ function ScheduleList({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {r.tipo === "laboratorio"
-                      ? r.seccion.laboratorio?.grupo || r.seccion.seccion
-                      : r.seccion.seccion}
+                    {etiquetaSeleccion(r.seccion)}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {docenteNombre(r.seccion.docente)}
@@ -1578,7 +1612,7 @@ function ExamSection({
                     </p>
                     {e.info.aula && <p className="text-xs text-muted-foreground">{e.info.aula}</p>}
                     <p className="mt-1 text-[11px] text-muted-foreground/70">
-                      {docenteNombre(e.seccion.docente)} · Sección {e.seccion.seccion}
+                      {docenteNombre(e.seccion.docente)} · {etiquetaSeleccion(e.seccion)}
                     </p>
                     {revision?.dia && (
                       <p className="mt-2 border-t border-border/60 pt-2 text-[11px] text-muted-foreground/70">
@@ -1870,7 +1904,7 @@ function buildICS(secciones: Seccion[]): string {
         `DTSTART:${icsDateTime(startDate, startH, startM)}`,
         `DTEND:${icsDateTime(startDate, endH, endM)}`,
         `RRULE:FREQ=WEEKLY;BYDAY=${DIA_ICS[c.dia] ?? "MO"};UNTIL=${icsDate(until)}T235959Z`,
-        `SUMMARY:${s.materia} (Sección ${s.seccion})`,
+        `SUMMARY:${s.materia} (${etiquetaSeleccion(s)})`,
         `LOCATION:${c.aula ?? "Aula a confirmar"}`,
         `DESCRIPTION:${docenteNombre(s.docente)}`,
         "END:VEVENT",
