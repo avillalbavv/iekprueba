@@ -60,6 +60,9 @@ jobs:
             echo "VITE_SUPABASE_ANON_KEY=${supabase_key}"
           } >> "${GITHUB_ENV}"
 
+      - name: Stamp application version
+        run: sed -i "s/__BUILD_VERSION__/${GITHUB_SHA}/g" public/sw.js
+
       - name: Build
         run: npm run build
 
