@@ -1,4 +1,4 @@
-const CACHE_NAME = "iek-static-v4";
+const CACHE_NAME = "iek-static-__BUILD_VERSION__";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/iek-favicon-circle.png"];
 
 self.addEventListener("install", (event) => {
