@@ -1,4 +1,4 @@
-const CACHE_NAME = "iek-static-v3";
+const CACHE_NAME = "iek-static-v4";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/iek-favicon-circle.png"];
 
 self.addEventListener("install", (event) => {
@@ -28,7 +28,11 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
       try {
-        const response = await fetch(event.request);
+        const request =
+          event.request.mode === "navigate"
+            ? new Request(event.request, { cache: "no-store" })
+            : event.request;
+        const response = await fetch(request);
         if (response.ok) {
           const cache = await caches.open(CACHE_NAME);
           await cache.put(event.request, response.clone());
@@ -36,7 +40,10 @@ self.addEventListener("fetch", (event) => {
         }
         return (await caches.match(event.request)) || response;
       } catch {
-        return (await caches.match(event.request)) || caches.match("/");
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.mode === "navigate") return caches.match("/");
+        return Response.error();
       }
     })(),
   );
