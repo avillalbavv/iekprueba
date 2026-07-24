@@ -1226,7 +1226,7 @@ function SectionCard({
                         {nombreMateriaVisible(s.materia)}
                       </p>
                     )}
-                    <p className="line-clamp-2" title={posibles}>
+                    <p className="whitespace-normal break-words leading-relaxed">
                       <span className="text-muted-foreground/60">Docentes posibles: </span>
                       {posibles}
                     </p>
